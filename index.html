@@ -724,9 +724,9 @@ async function cloudPull() {
       const p = rows[0].payload;
       state.jobs = Array.isArray(p.jobs) ? p.jobs : [];
       state.followedRooms = Array.isArray(p.followedRooms) ? p.followedRooms : [];
-      if (p.account && (!state.account || state.account.username === p.account.username)) {
+      if (p.account) {
         state.account = p.account;
-        if (screen === 'login' || screen === 'signup') screen = 'home';
+        if (screen === 'login' || screen === 'signup' || screen === 'dashboard') screen = 'home';
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         account: state.account, jobs: state.jobs, followedRooms: state.followedRooms
