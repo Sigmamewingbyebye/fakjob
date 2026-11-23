@@ -641,6 +641,8 @@ let syncUser = '';
 let syncState = 'off';
 let syncing = false;
 let pushTimer = null;
+let pushPending = false;
+let lastLocalChange = 0;
 const GRADES = ['M.1', 'M.2', 'M.3', 'M.4', 'M.5', 'M.6'];
 const ROOMS_PER_LEVEL = 13;
 const SUBJECTS = [
@@ -732,20 +734,25 @@ function updateSyncBadge() {
 }
 
 async function cloudPull() {
-  if (syncing) return;
+  if (syncing || pushPending) return;
   syncing = true;
   try {
-    const before = JSON.stringify({ a: state.account, j: state.jobs, f: state.followedRooms });
-    const res = await sbRequest('fakjob_state?select=id,payload');
+    const before = JSON.stringify({ a: state.account, j: state.jobs, f: state.followedRooms, l: state.likedIds });
+    const res = await sbRequest('fakjob_state?select=id,payload,updated_at');
     const rows = await res.json();
     if (rows.length) {
       const shared = rows.find((r) => r.id === 'jobs');
       const ownRow = rows.find((r) => r.id === syncRow());
       const legacy = rows.find((r) => r.id === SYNC_ROW);
 
-      state.jobs = shared && Array.isArray(shared.payload.jobs) ? shared.payload.jobs : [];
-      state.followedRooms = ownRow && Array.isArray(ownRow.payload.followedRooms) ? ownRow.payload.followedRooms : [];
-      state.likedIds = ownRow && Array.isArray(ownRow.payload.likedIds) ? ownRow.payload.likedIds : [];
+      const fresh = (row) => !lastLocalChange || (Date.parse(row.updated_at) || 0) >= lastLocalChange;
+      const sharedFresh = shared && fresh(shared);
+      const ownFresh = ownRow && fresh(ownRow);
+      if (sharedFresh) state.jobs = Array.isArray(shared.payload.jobs) ? shared.payload.jobs : [];
+      if (ownFresh) {
+        state.followedRooms = Array.isArray(ownRow.payload.followedRooms) ? ownRow.payload.followedRooms : [];
+        state.likedIds = Array.isArray(ownRow.payload.likedIds) ? ownRow.payload.likedIds : [];
+      }
 
       const ownAccount = ownRow && ownRow.payload.account;
       const legacyAccount = !state.account && legacy && legacy.payload.account;
@@ -766,13 +773,13 @@ async function cloudPull() {
         cloudPush();
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        account: state.account, jobs: state.jobs, followedRooms: state.followedRooms
+        account: state.account, jobs: state.jobs, followedRooms: state.followedRooms, likedIds: state.likedIds
       }));
       syncState = 'on';
       const safeScreen = screen === 'dashboard' || screen === 'home' || screen === 'history' || screen === 'profile';
       const focus = document.activeElement;
       const typing = focus && (focus.tagName === 'INPUT' || focus.tagName === 'TEXTAREA');
-      const changed = before !== JSON.stringify({ a: state.account, j: state.jobs, f: state.followedRooms });
+      const changed = before !== JSON.stringify({ a: state.account, j: state.jobs, f: state.followedRooms, l: state.likedIds });
       if (changed && safeScreen && !typing) render({ noAnim: true });
     }
   } catch (e) {
@@ -784,11 +791,12 @@ async function cloudPull() {
 
 function scheduleCloudPush() {
   clearTimeout(pushTimer);
+  pushPending = true;
   pushTimer = setTimeout(cloudPush, 700);
 }
 
 async function cloudPush() {
-  if (!state.account && !syncUser) return;
+  if (!state.account && !syncUser) { pushPending = false; return; }
   try {
     const now = new Date().toISOString();
     const post = (id, payload) => sbRequest('fakjob_state', {
@@ -804,6 +812,7 @@ async function cloudPush() {
   } catch (e) {
     syncState = 'off';
   }
+  pushPending = false;
   updateSyncBadge();
 }
 
@@ -873,6 +882,7 @@ function saveState() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ account: state.account, jobs: state.jobs, followedRooms: state.followedRooms, likedIds: state.likedIds }));
   } catch (e) { /* storage unavailable */ }
+  lastLocalChange = Date.now();
   scheduleCloudPush();
 }
 
