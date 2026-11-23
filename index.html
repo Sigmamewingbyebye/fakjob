@@ -1305,6 +1305,16 @@ function openPoster(jobId) {
   dlg.hidden = false;
 }
 
+async function openProfileByName(name, from) {
+  if (!name) return;
+  try {
+    const rows = await sbRequest('fakjob_state?select=id,payload');
+    const found = rows.find((r) => r.payload && r.payload.account && r.payload.account.name === name);
+    if (found) { openProfileView(found.id, from); return; }
+  } catch (e) { /* ใช้ข้อมูลในเครื่อง */ }
+  if (state.account && state.account.name === name) openProfileView(state.account.username, from);
+}
+
 async function openProfileView(username, from) {
   if (!username) return;
   viewFrom = from || screen;
@@ -1747,8 +1757,8 @@ function bindJobDetail() {
         const job = state.jobs.find((j) => j.postedByName === btn.dataset.commentName);
         user = job ? job.postedBy : '';
       }
-      if (!user && state.account && state.account.name === btn.dataset.commentName) user = state.account.username;
       if (user) openProfileView(user, 'jobDetail');
+      else openProfileByName(btn.dataset.commentName, 'jobDetail');
     });
   });
   if (commentInput) commentInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendComment(); });
@@ -1993,8 +2003,10 @@ function renderViewProfileHtml() {
   const cropStyle = crop
     ? `background-size: ${Math.round((crop.zoom || 1) * 100)}%; background-position: ${50 + (crop.x || 0) * 100}% ${50 + (crop.y || 0) * 100}%;`
     : 'background-size: cover; background-position: center;';
-  const bannerStyle = a.profileBanner
-    ? `background-image: url(&quot;${escapeHtml(a.profileBanner)}&quot;); background-size: cover; background-position: center;`
+  const ownAccount = state.account && state.account.username === a.username ? state.account : null;
+  const banner = a.profileBanner || (ownAccount && ownAccount.profileBanner) || '';
+  const bannerStyle = banner
+    ? `background-image: url(&quot;${escapeHtml(banner)}&quot;); background-size: cover; background-position: center; background-repeat: no-repeat;`
     : '';
   const followed = viewProfile.followedRooms || [];
   const chips = followed.map((f) => `<span class="home-chip">${escapeHtml(f.grade)}/${escapeHtml(f.room)}</span>`).join('');
@@ -2007,8 +2019,8 @@ function renderViewProfileHtml() {
   <h1 class="top-app-bar__title">โปรไฟล์</h1>
   <div class="grow"></div>
 </div>
-<div class="view-profile-page">
-  <div class="profile-banner ${a.profileBanner ? 'has-image' : ''}" style="${bannerStyle}">
+<div class="profile-page view-profile-page">
+  <div class="profile-banner ${banner ? 'has-image' : ''}" style="${bannerStyle}">
     <span class="banner-blob banner-blob--a" aria-hidden="true"></span>
     <span class="banner-blob banner-blob--b" aria-hidden="true"></span>
     <span class="banner-blob banner-blob--c" aria-hidden="true"></span>
@@ -2020,7 +2032,7 @@ function renderViewProfileHtml() {
       <div class="profile-ident__user">@${escapeHtml(a.username)}</div>
     </div>
   </header>
-  <main class="screen-main">
+  <main class="screen-main screen-main--nav">
     <section class="profile-section">
       <div class="profile-section__label">ห้องที่ติดตาม</div>
       <div class="home-chips">${chips || '<p class="empty-text">ยังไม่ได้ติดตามห้อง</p>'}</div>
