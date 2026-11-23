@@ -735,6 +735,7 @@ async function cloudPull() {
     const res = await sbRequest('fakjob_state?id=eq.' + encodeURIComponent(row) + '&select=payload');
     const rows = await res.json();
     if (rows.length && rows[0].payload) {
+      const before = JSON.stringify({ a: state.account, j: state.jobs, f: state.followedRooms });
       const p = rows[0].payload;
       state.jobs = Array.isArray(p.jobs) ? p.jobs : [];
       state.followedRooms = Array.isArray(p.followedRooms) ? p.followedRooms : [];
@@ -744,7 +745,10 @@ async function cloudPull() {
           syncUser = state.account.username;
           cloudPush();
         }
-        if (screen === 'login' || screen === 'signup' || screen === 'dashboard') screen = 'home';
+        if (screen === 'login' || screen === 'signup') {
+          navTab = 'home';
+          screen = 'home';
+        }
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         account: state.account, jobs: state.jobs, followedRooms: state.followedRooms
@@ -753,7 +757,8 @@ async function cloudPull() {
       const safeScreen = screen === 'dashboard' || screen === 'home' || screen === 'history' || screen === 'profile';
       const focus = document.activeElement;
       const typing = focus && (focus.tagName === 'INPUT' || focus.tagName === 'TEXTAREA');
-      if (safeScreen && !typing) render({ noAnim: true });
+      const changed = before !== JSON.stringify({ a: state.account, j: state.jobs, f: state.followedRooms });
+      if (changed && safeScreen && !typing) render({ noAnim: true });
     }
   } catch (e) {
     syncState = 'off';
