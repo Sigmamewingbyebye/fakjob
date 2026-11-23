@@ -627,6 +627,7 @@ const STORAGE_KEY = 'fak_jobs_v1';
 const SB_URL = 'https://xvrwgcdxkndchrmmlqjb.supabase.co';
 const SB_KEY = 'sb_publishable_nPzaaAvqnULfS5KKtSB-JA_GWwcAm55';
 const SYNC_ROW = 'main';
+let syncUser = '';
 let syncState = 'off';
 let syncing = false;
 let pushTimer = null;
@@ -709,6 +710,10 @@ async function sbRequest(path, options) {
   return res;
 }
 
+function syncRow() {
+  return syncUser || (state.account ? state.account.username : SYNC_ROW);
+}
+
 function updateSyncBadge() {
   const badge = document.getElementById('sync-badge');
   if (badge) badge.textContent = syncState === 'on' ? '☁️ ซิงก์ข้อมูลออนไลน์' : '⚠️ ข้อมูลอยู่ในเครื่องเท่านั้น';
@@ -718,14 +723,19 @@ async function cloudPull() {
   if (syncing) return;
   syncing = true;
   try {
-    const res = await sbRequest('fakjob_state?id=eq.' + encodeURIComponent(SYNC_ROW) + '&select=payload');
+    const row = syncRow();
+    const res = await sbRequest('fakjob_state?id=eq.' + encodeURIComponent(row) + '&select=payload');
     const rows = await res.json();
     if (rows.length && rows[0].payload) {
       const p = rows[0].payload;
       state.jobs = Array.isArray(p.jobs) ? p.jobs : [];
       state.followedRooms = Array.isArray(p.followedRooms) ? p.followedRooms : [];
-      if (p.account) {
+      if (p.account && (!state.account || p.account.username === state.account.username)) {
         state.account = p.account;
+        if (row === SYNC_ROW && state.account.username) {
+          syncUser = state.account.username;
+          cloudPush();
+        }
         if (screen === 'login' || screen === 'signup' || screen === 'dashboard') screen = 'home';
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
@@ -750,12 +760,13 @@ function scheduleCloudPush() {
 }
 
 async function cloudPush() {
+  if (!state.account && !syncUser) return;
   try {
     await sbRequest('fakjob_state', {
       method: 'POST',
       headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
       body: JSON.stringify({
-        id: SYNC_ROW,
+        id: syncRow(),
         payload: { account: state.account, jobs: state.jobs, followedRooms: state.followedRooms },
         updated_at: new Date().toISOString()
       })
@@ -946,16 +957,35 @@ function bindLogin() {
   document.getElementById('login-signup').addEventListener('click', () => go('signup'));
 }
 
-function onLoginSubmit(e) {
+async function onLoginSubmit(e) {
   e.preventDefault();
   const username = document.getElementById('login-username').value.trim();
   const password = document.getElementById('login-password').value;
   if (!username) { setFlash('กรุณากรอกชื่อผู้ใช้'); return; }
   if (!password) { setFlash('กรุณากรอกรหัสผ่าน'); return; }
-  const account = state.account;
-  if (!account) { setFlash('ยังไม่มีบัญชีในระบบ กด "สร้างบัญชี" เพื่อเริ่มต้น'); return; }
-  if (account.username !== username) { setFlash('ไม่พบบัญชีนี้'); return; }
-  if (hashStr(password) !== account.passwordHash) { setFlash('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'); return; }
+
+  let account = state.account && state.account.username === username ? state.account : null;
+  let cloudPayload = null;
+  try {
+    const res = await sbRequest('fakjob_state?id=eq.' + encodeURIComponent(username) + '&select=payload');
+    const rows = await res.json();
+    if (rows.length && rows[0].payload && rows[0].payload.account) {
+      cloudPayload = rows[0].payload;
+      account = cloudPayload.account;
+    }
+  } catch (err) { /* ใช้อมูลในเครื่องเมื่อออฟไลน์ */ }
+
+  if (!account) { setFlash('ไม่พบบัญชีนี้'); return; }
+  if (account.username !== username || hashStr(password) !== account.passwordHash) {
+    setFlash('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+    return;
+  }
+  if (cloudPayload) {
+    state.jobs = Array.isArray(cloudPayload.jobs) ? cloudPayload.jobs : [];
+    state.followedRooms = Array.isArray(cloudPayload.followedRooms) ? cloudPayload.followedRooms : [];
+  }
+  state.account = account;
+  syncUser = username;
   navTab = 'home';
   screen = 'home';
   saveState();
@@ -993,7 +1023,7 @@ function bindSignup() {
   document.getElementById('signup-back').addEventListener('click', () => go('login'));
 }
 
-function onSignupSubmit(e) {
+async function onSignupSubmit(e) {
   e.preventDefault();
   const username = document.getElementById('signup-username').value.trim();
   const name = document.getElementById('signup-name').value.trim();
@@ -1002,9 +1032,18 @@ function onSignupSubmit(e) {
   if (!name) { setFlash('กรุณากรอกชื่อ'); return; }
   if (password.length < 4) { setFlash('รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร'); return; }
   if (state.account && state.account.username === username) { setFlash('Username นี้ใช้แล้ว'); return; }
-  state.account = { username, name, passwordHash: hashStr(password), profilePic: '' };
+  try {
+    const res = await sbRequest('fakjob_state?id=eq.' + encodeURIComponent(username) + '&select=id');
+    const rows = await res.json();
+    if (rows.length) { setFlash('Username นี้ใช้แล้ว'); return; }
+  } catch (err) { /* อนุญาตสร้างบัญชีแบบออฟไลน์ */ }
+  state.account = { username, name, passwordHash: hashStr(password), profilePic: '', profilePicCrop: { zoom: 1, x: 0, y: 0 }, profileBanner: '' };
+  state.jobs = [];
+  state.followedRooms = [];
+  syncUser = username;
   saveState();
-  screen = 'dashboard';
+  navTab = 'home';
+  screen = 'home';
   render();
 }
 function navIconHtml(key, icon) {
@@ -2018,6 +2057,9 @@ function bindProfile() {
 
   document.getElementById('profile-logout').addEventListener('click', () => {
     state.account = null;
+    syncUser = '';
+    state.jobs = [];
+    state.followedRooms = [];
     saveState();
     go('login');
   });
