@@ -731,17 +731,23 @@ async function cloudPull() {
   if (syncing) return;
   syncing = true;
   try {
-    const row = syncRow();
-    const res = await sbRequest('fakjob_state?id=eq.' + encodeURIComponent(row) + '&select=payload');
+    const before = JSON.stringify({ a: state.account, j: state.jobs, f: state.followedRooms });
+    const res = await sbRequest('fakjob_state?select=id,payload');
     const rows = await res.json();
-    if (rows.length && rows[0].payload) {
-      const before = JSON.stringify({ a: state.account, j: state.jobs, f: state.followedRooms });
-      const p = rows[0].payload;
-      state.jobs = Array.isArray(p.jobs) ? p.jobs : [];
-      state.followedRooms = Array.isArray(p.followedRooms) ? p.followedRooms : [];
-      if (p.account && (!state.account || p.account.username === state.account.username)) {
-        state.account = p.account;
-        if (row === SYNC_ROW && state.account.username) {
+    if (rows.length) {
+      const shared = rows.find((r) => r.id === 'jobs');
+      const ownRow = rows.find((r) => r.id === syncRow());
+      const legacy = rows.find((r) => r.id === SYNC_ROW);
+
+      state.jobs = shared && Array.isArray(shared.payload.jobs) ? shared.payload.jobs : [];
+      state.followedRooms = ownRow && Array.isArray(ownRow.payload.followedRooms) ? ownRow.payload.followedRooms : [];
+
+      const ownAccount = ownRow && ownRow.payload.account;
+      const legacyAccount = !state.account && legacy && legacy.payload.account;
+      const accPayload = ownAccount || legacyAccount;
+      if (accPayload && (!state.account || accPayload.username === state.account.username)) {
+        state.account = accPayload;
+        if (!ownAccount && state.account.username) {
           syncUser = state.account.username;
           cloudPush();
         }
@@ -749,6 +755,10 @@ async function cloudPull() {
           navTab = 'home';
           screen = 'home';
         }
+      }
+      if (!shared && ownRow && Array.isArray(ownRow.payload.jobs) && ownRow.payload.jobs.length) {
+        state.jobs = ownRow.payload.jobs;
+        cloudPush();
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         account: state.account, jobs: state.jobs, followedRooms: state.followedRooms
@@ -775,15 +785,16 @@ function scheduleCloudPush() {
 async function cloudPush() {
   if (!state.account && !syncUser) return;
   try {
-    await sbRequest('fakjob_state', {
+    const now = new Date().toISOString();
+    const post = (id, payload) => sbRequest('fakjob_state', {
       method: 'POST',
       headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
-      body: JSON.stringify({
-        id: syncRow(),
-        payload: { account: state.account, jobs: state.jobs, followedRooms: state.followedRooms },
-        updated_at: new Date().toISOString()
-      })
+      body: JSON.stringify({ id, payload, updated_at: now })
     });
+    await Promise.all([
+      post('jobs', { jobs: state.jobs }),
+      post(syncRow(), { account: state.account, followedRooms: state.followedRooms })
+    ]);
     syncState = 'on';
   } catch (e) {
     syncState = 'off';
@@ -980,11 +991,13 @@ async function onLoginSubmit(e) {
   let account = state.account && state.account.username === username ? state.account : null;
   let cloudPayload = null;
   try {
-    const res = await sbRequest('fakjob_state?id=eq.' + encodeURIComponent(username) + '&select=payload');
+    const res = await sbRequest('fakjob_state?select=id,payload');
     const rows = await res.json();
-    if (rows.length && rows[0].payload && rows[0].payload.account) {
-      cloudPayload = rows[0].payload;
-      account = cloudPayload.account;
+    const own = rows.find((r) => r.id === username && r.payload && r.payload.account);
+    const shared = rows.find((r) => r.id === 'jobs');
+    if (own) {
+      cloudPayload = { ...own.payload, jobs: shared && Array.isArray(shared.payload.jobs) ? shared.payload.jobs : [] };
+      account = own.payload.account;
     }
   } catch (err) { /* ใช้อมูลในเครื่องเมื่อออฟไลน์ */ }
 
