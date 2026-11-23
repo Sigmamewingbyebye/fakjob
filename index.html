@@ -646,7 +646,7 @@ const SUBJECTS = [
   'สังคมศึกษา', 'ประวัติศาสตร์', 'ศิลปะ', 'นาฎศิลป์', 'ภาษาจีน', 'ฟิสิกส์'
 ];
 
-const state = { account: null, jobs: [], followedRooms: [] };
+const state = { account: null, jobs: [], followedRooms: [], likedIds: [] };
 let screen = 'login';
 let selectedJobId = null;
 let navTab = 'home';
@@ -741,6 +741,7 @@ async function cloudPull() {
 
       state.jobs = shared && Array.isArray(shared.payload.jobs) ? shared.payload.jobs : [];
       state.followedRooms = ownRow && Array.isArray(ownRow.payload.followedRooms) ? ownRow.payload.followedRooms : [];
+      state.likedIds = ownRow && Array.isArray(ownRow.payload.likedIds) ? ownRow.payload.likedIds : [];
 
       const ownAccount = ownRow && ownRow.payload.account;
       const legacyAccount = !state.account && legacy && legacy.payload.account;
@@ -793,13 +794,17 @@ async function cloudPush() {
     });
     await Promise.all([
       post('jobs', { jobs: state.jobs }),
-      post(syncRow(), { account: state.account, followedRooms: state.followedRooms })
+      post(syncRow(), { account: state.account, followedRooms: state.followedRooms, likedIds: state.likedIds })
     ]);
     syncState = 'on';
   } catch (e) {
     syncState = 'off';
   }
   updateSyncBadge();
+}
+
+function isLiked(job) {
+  return state.likedIds.indexOf(job.id) !== -1;
 }
 
 function isFollowed(grade, room) {
@@ -816,9 +821,10 @@ function toggleFollow(grade, room) {
 }
 
 function toggleLike(jobId) {
-  const job = state.jobs.find((j) => j.id === jobId);
-  if (!job) return;
-  job.liked = !job.liked;
+  if (!state.jobs.some((j) => j.id === jobId)) return;
+  const i = state.likedIds.indexOf(jobId);
+  if (i >= 0) state.likedIds.splice(i, 1);
+  else state.likedIds.push(jobId);
   saveState();
   cloudPush();
   render({ noAnim: true });
@@ -852,6 +858,7 @@ function loadState() {
     state.account = parsed && parsed.account ? parsed.account : null;
     state.jobs = parsed && Array.isArray(parsed.jobs) ? parsed.jobs : [];
     state.followedRooms = parsed && Array.isArray(parsed.followedRooms) ? parsed.followedRooms : [];
+    state.likedIds = parsed && Array.isArray(parsed.likedIds) ? parsed.likedIds : [];
   } catch (e) {
     state.account = null;
     state.jobs = [];
@@ -860,7 +867,7 @@ function loadState() {
 
 function saveState() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ account: state.account, jobs: state.jobs, followedRooms: state.followedRooms }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ account: state.account, jobs: state.jobs, followedRooms: state.followedRooms, likedIds: state.likedIds }));
   } catch (e) { /* storage unavailable */ }
   scheduleCloudPush();
 }
@@ -1012,6 +1019,7 @@ async function onLoginSubmit(e) {
   if (cloudPayload) {
     state.jobs = Array.isArray(cloudPayload.jobs) ? cloudPayload.jobs : [];
     state.followedRooms = Array.isArray(cloudPayload.followedRooms) ? cloudPayload.followedRooms : [];
+    state.likedIds = Array.isArray(cloudPayload.likedIds) ? cloudPayload.likedIds : [];
   }
   state.account = account;
   syncUser = username;
@@ -1069,6 +1077,7 @@ async function onSignupSubmit(e) {
   state.account = { username, name, passwordHash: hashStr(password), profilePic: '', profilePicCrop: { zoom: 1, x: 0, y: 0 }, profileBanner: '' };
   state.jobs = [];
   state.followedRooms = [];
+  state.likedIds = [];
   syncUser = username;
   saveState();
   navTab = 'home';
@@ -1230,7 +1239,7 @@ function renderHomeHtml() {
       && (!homeSubjectFilter || (j.subjectOther || j.subject) === homeSubjectFilter))
     .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
   const liked = [...state.jobs]
-    .filter((j) => j.liked)
+    .filter((j) => state.likedIds.indexOf(j.id) !== -1)
     .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
   const chips = followed.map((f) => `<span class="home-chip">${f.grade}/${f.room}</span>`).join('');
   const typeMenu = `
@@ -1432,7 +1441,7 @@ function renderJobCardHtml(job) {
   const postedBy = (state.account && job.postedByName) || job.postedBy || '';
   return `
 <article class="job-card" data-job-id="${escapeHtml(job.id)}">
-  <button type="button" class="job-like ${job.liked ? 'is-liked' : ''}" data-like="${escapeHtml(job.id)}" aria-label="${job.liked ? 'เลิกถูกใจ' : 'ถูกใจ'}" style="${job.liked ? 'color: var(--md-sys-color-error);' : ''}"><span class="material-icons">favorite</span></button>
+  <button type="button" class="job-like ${isLiked(job) ? 'is-liked' : ''}" data-like="${escapeHtml(job.id)}" aria-label="${isLiked(job) ? 'เลิกถูกใจ' : 'ถูกใจ'}" style="${isLiked(job) ? 'color: var(--md-sys-color-error);' : ''}"><span class="material-icons">favorite</span></button>
   <div class="job-card__top">
     <span class="job-card__subject t-label-large">${job.type === 'exam' ? 'นัดสอบ · ' : job.type === 'answer' ? 'เฉลย · ' : ''}${escapeHtml(subject)}</span>
     <span class="job-card__room t-body-small">${job.grade ? `ม.${job.grade} ห้อง ${job.room}` : 'ไม่ระบุห้อง'}</span>
@@ -1487,7 +1496,7 @@ function renderJobDetailHtml(job) {
     ${posterPic(job) ? `<span class="poster-avatar" style="background-image: url(&quot;${escapeHtml(posterPic(job))}&quot;);"></span>` : '<span class="material-icons">account_circle</span>'}
     โพสต์โดย ${escapeHtml(postedBy)}
   </button>
-  <button type="button" class="filled-tonal-button job-like-detail ${job.liked ? 'is-liked' : ''}" id="job-like-btn" data-like="${escapeHtml(job.id)}" style="${job.liked ? 'background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container);' : ''}"><span class="material-icons">favorite</span>${job.liked ? 'เลิกถูกใจ' : 'ถูกใจ / บันทึก'}</button>
+  <button type="button" class="filled-tonal-button job-like-detail ${isLiked(job) ? 'is-liked' : ''}" id="job-like-btn" data-like="${escapeHtml(job.id)}" style="${isLiked(job) ? 'background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container);' : ''}"><span class="material-icons">favorite</span>${isLiked(job) ? 'เลิกถูกใจ' : 'ถูกใจ / บันทึก'}</button>
   <button type="button" class="filled-tonal-button job-delete" id="job-delete" style="background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container);"><span class="material-icons">delete</span>ลบงาน</button>
   <section class="card"><h2 class="card-heading t-title-large">งาน / เนื้อหางาน</h2><div class="card-body t-body-medium">${escapeHtml(job.content)}</div></section>
   ${job.answer ? `<section class="card"><h2 class="card-heading t-title-large">เฉลย / เกรงคำตอบ</h2><div class="card-body t-body-medium">${escapeHtml(job.answer)}</div></section>` : ''}
@@ -2090,6 +2099,7 @@ function bindProfile() {
     syncUser = '';
     state.jobs = [];
     state.followedRooms = [];
+    state.likedIds = [];
     saveState();
     go('login');
   });
