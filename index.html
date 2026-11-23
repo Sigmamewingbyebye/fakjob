@@ -1551,13 +1551,15 @@ function renderJobCardHtml(job) {
 function renderJobDetailHtml(job) {
   const status = statusOf(job);
   const postedBy = (state.account && job.postedByName) || job.postedBy || '';
+  const jobFiles = Array.isArray(job.files) ? job.files : [];
+  const jobLinks = Array.isArray(job.links) ? job.links : [];
   const isImage = (f) => (f.type || '').startsWith('image/') || /\.(png|jpe?g|gif|webp|avif)$/i.test(f.name || '');
-  const images = job.files.filter(isImage);
+  const images = jobFiles.filter(isImage);
   const imagesHtml = images.map((f) => `
     <figure class="job-image"><img src="${escapeHtml(f.dataUrl)}" alt="${escapeHtml(f.name)}" loading="lazy"><figcaption>${escapeHtml(f.name)}</figcaption></figure>`).join('');
-  const filesHtml = job.files.filter((f) => !isImage(f)).map((f) => `
+  const filesHtml = jobFiles.filter((f) => !isImage(f)).map((f) => `
 <li class="file-row"><a class="file-row__link" href="${escapeHtml(f.dataUrl)}" download="${escapeHtml(f.name)}">${escapeHtml(f.name)}</a></li>`).join('');
-  const linksHtml = job.links.map((l) => `
+  const linksHtml = jobLinks.map((l) => `
 <li class="link-list-ul__item"><a class="link-row__link" href="${escapeHtml(l.url)}" target="_blank" rel="noreferrer"><span class="material-icons">link</span>${escapeHtml(l.url)}</a></li>`).join('');
   const comments = job.comments || [];
   const commentsHtml = comments.map((c) => `
@@ -1592,7 +1594,7 @@ function renderJobDetailHtml(job) {
   ${job.answer ? `<section class="card"><h2 class="card-heading t-title-large">เฉลย / เกรงคำตอบ</h2><div class="card-body t-body-medium">${escapeHtml(job.answer)}</div></section>` : ''}
   ${images.length ? `<section class="card"><h2 class="card-heading t-title-large">รูปภาพ</h2><div class="job-gallery">${imagesHtml}</div></section>` : ''}
   ${filesHtml ? `<section class="card"><h2 class="card-heading t-title-large">ไฟล์ประกอบ</h2><ul class="file-list-ul">${filesHtml}</ul></section>` : ''}
-  ${job.links.length ? `<section class="card"><h2 class="card-heading t-title-large">ลิ้งค์ต่างๆ</h2><ul class="link-list-ul">${linksHtml}</ul></section>` : ''}
+  ${jobLinks.length ? `<section class="card"><h2 class="card-heading t-title-large">ลิ้งค์ต่างๆ</h2><ul class="link-list-ul">${linksHtml}</ul></section>` : ''}
   <section class="card">
     <h2 class="card-heading t-title-large">ความเห็น (${comments.length})</h2>
     <div class="comment-list">${commentsHtml || '<p class="empty-text">ยังไม่มีความเห็น</p>'}</div>
