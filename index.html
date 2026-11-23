@@ -626,8 +626,7 @@ html[data-color="pink"] {
 'use strict';
 /* ---- state ---- */
 const STORAGE_KEY = 'fak_jobs_v1';
-const SB_URL = 'https://xvrwgcdxkndchrmmlqjb.supabase.co';
-const SB_KEY = 'sb_publishable_nPzaaAvqnULfS5KKtSB-JA_GWwcAm55';
+const FB_URL = 'https://fakjob-1211f-default-rtdb.asia-southeast1.firebasedatabase.app/fakjob';
 const SYNC_ROW = 'main';
 const BOOTSTRAP_ACCOUNT = {
   username: 'admin',
@@ -709,19 +708,37 @@ function loadSettings() {
   applySettings();
 }
 
+async function fbAll() {
+  const res = await fetch(FB_URL + '.json');
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  if (!data || typeof data !== 'object') return [];
+  return Object.keys(data).map((id) => ({
+    id,
+    payload: data[id] && typeof data[id] === 'object' ? data[id] : {},
+    updated_at: (data[id] && data[id].updated_at) || ''
+  }));
+}
+
 async function sbRequest(path, options) {
   const opt = options || {};
-  const res = await fetch(SB_URL + '/rest/v1/' + path, {
-    method: opt.method || 'GET',
-    headers: Object.assign({
-      'apikey': SB_KEY,
-      'Authorization': 'Bearer ' + SB_KEY,
-      'Content-Type': 'application/json'
-    }, opt.headers || {}),
-    body: opt.body
-  });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  return res;
+  if ((opt.method || 'GET') === 'POST' && opt.body) {
+    const body = JSON.parse(opt.body);
+    const res = await fetch(FB_URL + '/' + encodeURIComponent(body.id) + '.json', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body.payload || {})
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return { json: async () => ({}) };
+  }
+  const rows = await fbAll();
+  const m = path.match(/id=eq\.([^&]+)/);
+  if (m) {
+    const id = decodeURIComponent(m[1]);
+    return { json: async () => rows.filter((r) => r.id === id).map((r) => ({ id: r.id })) };
+  }
+  return { json: async () => rows };
 }
 
 function syncRow() {
@@ -802,7 +819,7 @@ async function cloudPush() {
     const post = (id, payload) => sbRequest('fakjob_state', {
       method: 'POST',
       headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
-      body: JSON.stringify({ id, payload, updated_at: now })
+      body: JSON.stringify({ id, payload: Object.assign({}, payload, { updated_at: now }) })
     });
     await Promise.all([
       post('jobs', { jobs: state.jobs }),
