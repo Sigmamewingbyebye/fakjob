@@ -1312,6 +1312,24 @@ async function openProfileView(username, from) {
       return;
     }
   } catch (e) { /* ใช้ข้อมูลในเครื่อง */ }
+
+  const localJob = state.jobs.find((j) => j.postedBy === username);
+  if (localJob) {
+    viewProfile = {
+      account: {
+        username,
+        name: localJob.postedByName || username,
+        profilePic: localJob.postedByPic || '',
+        profilePicCrop: { zoom: 1, x: 0, y: 0 },
+        profileBanner: ''
+      },
+      followedRooms: state.account && state.account.username === username ? state.followedRooms : [],
+      jobs: state.jobs.filter((j) => j.postedBy === username)
+    };
+    go('viewProfile');
+    return;
+  }
+
   if (state.account && state.account.username === username) {
     viewProfile = { account: state.account, followedRooms: state.followedRooms, jobs: state.jobs.filter((j) => j.postedBy === username) };
     go('viewProfile');
@@ -1347,7 +1365,7 @@ function bindHome() {
     const poster = card.querySelector('.poster-chip');
     if (poster) poster.addEventListener('click', (e) => {
       e.stopPropagation();
-      const job = state.jobs.find((j) => j.id === poster.dataset.posterJob);
+      const job = state.jobs.find((j) => j.id === (poster.dataset.posterJob || card.dataset.jobId));
       if (job) openProfileView(job.postedBy, screen);
     });
   });
@@ -1390,7 +1408,7 @@ function bindHistory() {
     const poster = card.querySelector('.poster-chip');
     if (poster) poster.addEventListener('click', (e) => {
       e.stopPropagation();
-      const job = state.jobs.find((j) => j.id === poster.dataset.posterJob);
+      const job = state.jobs.find((j) => j.id === (poster.dataset.posterJob || card.dataset.jobId));
       if (job) openProfileView(job.postedBy, screen);
     });
   });
@@ -1657,7 +1675,7 @@ function bindDashboard() {
     const poster = card.querySelector('.poster-chip');
     if (poster) poster.addEventListener('click', (e) => {
       e.stopPropagation();
-      const job = state.jobs.find((j) => j.id === poster.dataset.posterJob);
+      const job = state.jobs.find((j) => j.id === (poster.dataset.posterJob || card.dataset.jobId));
       if (job) openProfileView(job.postedBy, screen);
     });
   });
