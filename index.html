@@ -811,6 +811,7 @@ function toggleFollow(grade, room) {
   if (i >= 0) state.followedRooms.splice(i, 1);
   else state.followedRooms.push({ grade, room });
   saveState();
+  cloudPush();
   render({ noAnim: true });
 }
 
@@ -819,6 +820,7 @@ function toggleLike(jobId) {
   if (!job) return;
   job.liked = !job.liked;
   saveState();
+  cloudPush();
   render({ noAnim: true });
   document.querySelectorAll('[data-like="' + jobId + '"] .material-icons').forEach((icon) => {
     icon.classList.remove('heart-pop');
@@ -1653,6 +1655,7 @@ function bindJobDetail() {
       createdAt: new Date().toISOString()
     });
     saveState();
+    cloudPush();
     render({ noAnim: true });
   }
   if (commentSend) commentSend.addEventListener('click', sendComment);
@@ -2234,7 +2237,7 @@ function init() {
   loadSettings();
   loadState();
   cloudPull();
-  setInterval(cloudPull, 6000);
+  setInterval(cloudPull, 3000);
   document.getElementById('nav-root').innerHTML = bottomNavHtml();
   document.body.insertAdjacentHTML('beforeend', `
 <div class="poster-scrim" id="poster-dialog" hidden>
