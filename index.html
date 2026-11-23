@@ -425,6 +425,7 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
 .changelog-row > .material-icons { color: var(--md-sys-color-primary); flex-shrink: 0; }
 .changelog-title { font-size: 14px; font-weight: 500; color: var(--md-sys-color-on-surface); }
 .changelog-sub { font-size: 12px; color: var(--md-sys-color-on-surface-variant); margin-top: 4px; }
+.sync-badge { font-size: 12px; color: var(--md-sys-color-on-surface-variant); margin-top: 12px; }
 
 /* ---- job images + optional form actions ---- */
 .form-section__actions { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -623,6 +624,12 @@ html[data-color="pink"] {
 'use strict';
 /* ---- state ---- */
 const STORAGE_KEY = 'fak_jobs_v1';
+const SB_URL = 'https://xvrwgcdxkndchrmmlqjb.supabase.co';
+const SB_KEY = 'sb_publishable_nPzaaAvqnULfS5KKtSB-JA_GWwcAm55';
+const SYNC_ROW = 'main';
+let syncState = 'off';
+let syncing = false;
+let pushTimer = null;
 const GRADES = ['M.1', 'M.2', 'M.3', 'M.4', 'M.5', 'M.6'];
 const ROOMS_PER_LEVEL = 13;
 const SUBJECTS = [
@@ -687,6 +694,75 @@ function loadSettings() {
   applySettings();
 }
 
+async function sbRequest(path, options) {
+  const opt = options || {};
+  const res = await fetch(SB_URL + '/rest/v1/' + path, {
+    method: opt.method || 'GET',
+    headers: Object.assign({
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer ' + SB_KEY,
+      'Content-Type': 'application/json'
+    }, opt.headers || {}),
+    body: opt.body
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res;
+}
+
+function updateSyncBadge() {
+  const badge = document.getElementById('sync-badge');
+  if (badge) badge.textContent = syncState === 'on' ? '☁️ ซิงก์ข้อมูลออนไลน์' : '⚠️ ข้อมูลอยู่ในเครื่องเท่านั้น';
+}
+
+async function cloudPull() {
+  if (syncing) return;
+  syncing = true;
+  try {
+    const res = await sbRequest('fakjob_state?id=eq.' + encodeURIComponent(SYNC_ROW) + '&select=payload');
+    const rows = await res.json();
+    if (rows.length && rows[0].payload) {
+      const p = rows[0].payload;
+      state.jobs = Array.isArray(p.jobs) ? p.jobs : [];
+      state.followedRooms = Array.isArray(p.followedRooms) ? p.followedRooms : [];
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        account: state.account, jobs: state.jobs, followedRooms: state.followedRooms
+      }));
+      syncState = 'on';
+      const safeScreen = screen === 'dashboard' || screen === 'home' || screen === 'history' || screen === 'profile';
+      const focus = document.activeElement;
+      const typing = focus && (focus.tagName === 'INPUT' || focus.tagName === 'TEXTAREA');
+      if (safeScreen && !typing) render({ noAnim: true });
+    }
+  } catch (e) {
+    syncState = 'off';
+  }
+  syncing = false;
+  updateSyncBadge();
+}
+
+function scheduleCloudPush() {
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(cloudPush, 700);
+}
+
+async function cloudPush() {
+  try {
+    await sbRequest('fakjob_state', {
+      method: 'POST',
+      headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify({
+        id: SYNC_ROW,
+        payload: { jobs: state.jobs, followedRooms: state.followedRooms },
+        updated_at: new Date().toISOString()
+      })
+    });
+    syncState = 'on';
+  } catch (e) {
+    syncState = 'off';
+  }
+  updateSyncBadge();
+}
+
 function isFollowed(grade, room) {
   return state.followedRooms.some((f) => f.grade === grade && f.room === room);
 }
@@ -745,6 +821,7 @@ function saveState() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ account: state.account, jobs: state.jobs, followedRooms: state.followedRooms }));
   } catch (e) { /* storage unavailable */ }
+  scheduleCloudPush();
 }
 
 function go(name, jobId) {
@@ -1816,6 +1893,7 @@ function renderProfileHtml() {
         <div class="changelog-sub">ติดตามข่าวสารและฟีเจอร์ใหม่ ๆ ของแอปได้ที่นี่</div>
       </div>
     </div>
+    <div class="sync-badge" id="sync-badge">☁️ กำลังเชื่อมต่อ...</div>
   </section>
 
   <button type="button" class="filled-button profile-logout" id="profile-logout" style="background: var(--md-sys-color-error); color: var(--md-sys-color-on-error);"><span class="material-icons">logout</span>ออกจากระบบ</button>
@@ -1945,6 +2023,7 @@ function bindProfile() {
   }
   updateProfileCollapse();
   updateBannerContrast();
+  updateSyncBadge();
   bindBottomNav();
 }
 
@@ -2080,6 +2159,8 @@ function render(options) {
 function init() {
   loadSettings();
   loadState();
+  cloudPull();
+  setInterval(cloudPull, 6000);
   document.getElementById('nav-root').innerHTML = bottomNavHtml();
   document.body.insertAdjacentHTML('beforeend', `
 <div class="poster-scrim" id="poster-dialog" hidden>
