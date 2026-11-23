@@ -627,6 +627,14 @@ const STORAGE_KEY = 'fak_jobs_v1';
 const SB_URL = 'https://xvrwgcdxkndchrmmlqjb.supabase.co';
 const SB_KEY = 'sb_publishable_nPzaaAvqnULfS5KKtSB-JA_GWwcAm55';
 const SYNC_ROW = 'main';
+const BOOTSTRAP_ACCOUNT = {
+  username: 'admin',
+  name: 'Admin',
+  passwordHash: 'yjbbf3-5620cx',
+  profilePic: '',
+  profilePicCrop: { zoom: 1, x: 0, y: 0 },
+  profileBanner: ''
+};
 let syncUser = '';
 let syncState = 'off';
 let syncing = false;
@@ -975,6 +983,7 @@ async function onLoginSubmit(e) {
     }
   } catch (err) { /* ใช้อมูลในเครื่องเมื่อออฟไลน์ */ }
 
+  if (!account && username === BOOTSTRAP_ACCOUNT.username) account = BOOTSTRAP_ACCOUNT;
   if (!account) { setFlash('ไม่พบบัญชีนี้'); return; }
   if (account.username !== username || hashStr(password) !== account.passwordHash) {
     setFlash('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
