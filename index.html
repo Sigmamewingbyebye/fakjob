@@ -367,6 +367,11 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
   transition: transform var(--md-dur-spatial) var(--md-sys-motion-spatial-fast),
               border-radius var(--md-dur-spatial) var(--md-sys-motion-spatial-fast);
 }
+.room-card.reveal { opacity: 0; transform: translateY(14px); }
+.room-card.reveal.is-visible { opacity: 1; transform: none; animation: m3-fade 200ms var(--md-sys-motion-effects-default) backwards, room-pop-in 350ms var(--md-sys-motion-spatial-fast) backwards; }
+@keyframes room-pop-in { from { transform: translateY(14px) scale(0.96); } to { transform: none; } }
+.room-card.is-opening { z-index: 4; animation: room-pop 350ms var(--md-sys-motion-spatial-fast); }
+@keyframes room-pop { 0% { transform: scale(1); } 45% { transform: scale(1.06); } 100% { transform: scale(1); } }
 .room-card.is-swiping { transition: none !important; z-index: 3; background: transparent; border-color: transparent; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3); }
 .room-card.is-leaving { transition: transform 350ms var(--md-sys-motion-spatial-smooth), opacity 250ms var(--md-sys-motion-effects-slow); pointer-events: none; }
 .room-swipe-bg { position: absolute; inset: 0; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 6px; background: color-mix(in srgb, var(--md-sys-color-primary) 26%, transparent); color: var(--md-sys-color-on-primary-container); font-size: 12px; font-weight: 500; opacity: 0; pointer-events: none; }
@@ -518,6 +523,7 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+  .room-card.reveal { opacity: 1; transform: none; animation: none; }
 }
 html[data-mode="dark"] {
   color-scheme: dark;
@@ -1699,10 +1705,36 @@ function bindDashboard() {
     card.addEventListener('pointercancel', endSwipe);
     card.addEventListener('click', () => {
       if (swiped) { swiped = false; return; }
-      currentRoom = card.dataset.room;
-      render();
+      const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      card.classList.add('is-opening');
+      card.style.animationDelay = '0ms';
+      const room = card.dataset.room;
+      window.setTimeout(() => {
+        currentRoom = room;
+        render();
+      }, reduce ? 0 : 170);
     });
   });
+
+  const roomCards = document.querySelectorAll('.room-grid .room-card');
+  if (roomCards.length) {
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        });
+      }, { root: document.getElementById('app'), rootMargin: '0px 0px -8% 0px', threshold: 0.05 });
+      roomCards.forEach((card, i) => {
+        card.classList.add('reveal');
+        card.style.animationDelay = Math.min(i % 4, 3) * 30 + 'ms';
+        observer.observe(card);
+      });
+    } else {
+      roomCards.forEach((card) => card.classList.add('is-visible'));
+    }
+  }
 
   const roomBack = document.getElementById('room-back');
   if (roomBack) roomBack.addEventListener('click', () => { currentRoom = null; render(); });
