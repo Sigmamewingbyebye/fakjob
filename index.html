@@ -1,0 +1,2133 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0061A4">
+<title>ฝากงาน</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap">
+<style>
+/* ---- Material Design 3 color tokens (light) ---- */
+:root {
+  color-scheme: light;
+  --md-sys-color-primary: var(--scheme-primary, #4C1D95);
+  --md-sys-color-on-primary: var(--scheme-on-primary, #FFFFFF);
+  --md-sys-color-primary-container: var(--scheme-primary-container, #E9D5FF);
+  --md-sys-color-on-primary-container: var(--scheme-on-primary-container, #2E1065);
+  --md-sys-color-secondary: var(--scheme-secondary, #6D28D9);
+  --md-sys-color-on-secondary: #FFFFFF;
+  --md-sys-color-secondary-container: var(--scheme-secondary-container, #EDE9FE);
+  --md-sys-color-on-secondary-container: var(--scheme-on-secondary-container, #3B0764);
+  --md-sys-color-tertiary: var(--scheme-tertiary, #7C3AED);
+  --md-sys-color-on-tertiary: #FFFFFF;
+  --md-sys-color-tertiary-container: var(--scheme-tertiary-container, #F3E8FF);
+  --md-sys-color-on-tertiary-container: var(--scheme-on-secondary-container, #3B0764);
+  --md-sys-color-quaternary: var(--scheme-primary, #4C1D95);
+  --md-sys-color-on-quaternary: #FFFFFF;
+  --md-sys-color-quaternary-container: var(--scheme-primary-container, #E9D5FF);
+  --md-sys-color-on-quaternary-container: var(--scheme-on-primary-container, #2E1065);
+  --md-sys-color-error: #BA1A1A;
+  --md-sys-color-on-error: #FFFFFF;
+  --md-sys-color-error-container: #FFDAD6;
+  --md-sys-color-on-error-container: #410002;
+  --md-sys-color-background: color-mix(in srgb, var(--scheme-primary, #4C1D95) 4%, white);
+  --md-sys-color-on-background: #1F1B26;
+  --md-sys-color-surface: color-mix(in srgb, var(--scheme-primary, #4C1D95) 3%, white);
+  --md-sys-color-on-surface: #1F1B26;
+  --md-sys-color-surface-variant: color-mix(in srgb, var(--scheme-primary, #4C1D95) 10%, white);
+  --md-sys-color-on-surface-variant: #5F5B66;
+  --md-sys-color-surface-container: color-mix(in srgb, var(--scheme-primary, #4C1D95) 6%, white);
+  --md-sys-color-surface-container-low: color-mix(in srgb, var(--scheme-primary, #4C1D95) 2%, white);
+  --md-sys-color-surface-container-high: color-mix(in srgb, var(--scheme-primary, #4C1D95) 12%, white);
+  --md-sys-color-inverse-surface: #1F1F21;
+  --md-sys-color-inverse-on-surface: #F2F2F4;
+  --md-sys-color-inverse-primary: #001D36;
+  --md-sys-color-outline: #656A73;
+  --md-sys-color-outline-variant: #C3C6CC;
+}
+
+/* ---- M3 motion + shape tokens (expressive spring → web curve fallback) ---- */
+:root {
+  --md-sys-motion-spatial-fast: cubic-bezier(0.42, 1.67, 0.21, 0.90);
+  --md-sys-motion-spatial-default: cubic-bezier(0.38, 1.21, 0.22, 1.00);
+  --md-sys-motion-effects-fast: cubic-bezier(0.31, 0.94, 0.34, 1.00);
+  --md-sys-motion-effects-default: cubic-bezier(0.34, 0.80, 0.34, 1.00);
+  --md-sys-motion-effects-slow: cubic-bezier(0.34, 0.88, 0.34, 1.00);
+  --md-dur-fast: 150ms;
+  --md-dur-default: 200ms;
+  --md-dur-spatial: 350ms;
+  --md-dur-spatial-default: 500ms;
+  --md-shape-xs: 4px;
+  --md-shape-sm: 8px;
+  --md-shape-md: 12px;
+  --md-shape-lg: 16px;
+  --md-shape-lg-inc: 20px;
+  --md-shape-xl: 28px;
+  --md-shape-full: 999px;
+  --md-sys-motion-spatial-smooth: cubic-bezier(0.27, 1.03, 0.18, 1.00);
+  --md-dur-smooth: 700ms;
+  --md-dur-effects-slow: 400ms;
+}
+/* ---- M3 typography: baseline + emphasized ---- */
+.t-display-large { font-size: 24px; font-weight: 400; line-height: 30px; }
+.t-display-medium { font-size: 18px; font-weight: 400; line-height: 24px; }
+.t-display-small { font-size: 14px; font-weight: 400; line-height: 18px; }
+.t-headline-large { font-size: 20px; font-weight: 400; line-height: 26px; }
+.t-headline-medium { font-size: 16px; font-weight: 400; line-height: 20px; }
+.t-headline-small { font-size: 13px; font-weight: 400; line-height: 16px; }
+.t-title-large { font-size: 15px; font-weight: 400; line-height: 20px; }
+.t-title-medium { font-size: 16px; font-weight: 500; line-height: 24px; letter-spacing: 0.2px; }
+.t-title-small { font-size: 14px; font-weight: 500; line-height: 20px; letter-spacing: 0.1px; }
+.t-body-large { font-size: 16px; font-weight: 400; line-height: 24px; letter-spacing: 0.5px; }
+.t-body-medium { font-size: 14px; font-weight: 400; line-height: 20px; letter-spacing: 0.2px; }
+.t-body-small { font-size: 12px; font-weight: 400; line-height: 16px; letter-spacing: 0.4px; }
+.t-label-large { font-size: 14px; font-weight: 500; line-height: 20px; letter-spacing: 0.1px; }
+.t-label-medium { font-size: 12px; font-weight: 500; line-height: 16px; letter-spacing: 0.5px; }
+.t-label-small { font-size: 11px; font-weight: 500; line-height: 16px; letter-spacing: 0.5px; }
+/* emphasized: same size/line-height, heavier weight (M3 Expressive) */
+.t-emph.t-display-large, .t-emph.t-display-medium, .t-emph.t-display-small,
+.t-emph.t-headline-large, .t-emph.t-headline-medium, .t-emph.t-headline-small,
+.t-emph.t-title-large, .t-emph.t-body-large, .t-emph.t-body-medium, .t-emph.t-body-small { font-weight: 500; }
+.t-emph.t-title-medium, .t-emph.t-title-small, .t-emph.t-label-large,
+.t-emph.t-label-medium, .t-emph.t-label-small { font-weight: 700; }
+.t-emph.t-display-large, .t-emph.t-display-medium, .t-emph.t-display-small,
+.t-emph.t-headline-large, .t-emph.t-headline-medium, .t-emph.t-title-large { letter-spacing: 0; }
+
+/* ---- layout ---- */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; overscroll-behavior: none; font-family: Roboto, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+body { background: var(--md-sys-color-background); color: var(--md-sys-color-on-background); }
+#app { height: 100dvh; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; }
+.material-icons { font-family: 'Material Symbols Outlined', sans-serif; font-size: 24px; line-height: 1; }
+.top-app-bar { display: flex; align-items: center; justify-content: space-between; min-height: 64px; padding: 12px 16px; background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); border-bottom: 1px solid var(--md-sys-color-outline-variant); font-size: 14px; }
+.top-app-bar__title { font-size: 20px; font-weight: 500; letter-spacing: 0; margin: 0; }
+.top-app-bar .avatar { flex-shrink: 0; width: 40px !important; height: 40px !important; }
+.screen-main { display: flex; flex-direction: column; gap: 12px; padding: 8px 16px 24px; }
+.grow { flex: 1; }
+.empty-text { color: var(--md-sys-color-on-surface-variant); font-size: 13px; padding: 16px 0; margin: 0; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* ---- buttons ---- */
+/* M3 state layers: hover 8%, focus 10%, pressed 10% (effects spring, no overshoot) */
+:where(.filled-button, .filled-tonal-button, .outlined-button, .text-button, .icon-button, .fab, .room-card, .job-card, .nav-item__pill, .grade-chip, .menu-item) { position: relative; isolation: isolate; }
+:where(.filled-button, .filled-tonal-button, .outlined-button, .text-button, .icon-button, .fab, .room-card, .job-card, .nav-item__pill, .grade-chip, .menu-item)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: currentColor;
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
+  transition: opacity var(--md-dur-default) var(--md-sys-motion-effects-default);
+}
+:where(.filled-button, .filled-tonal-button, .outlined-button, .text-button, .icon-button, .fab, .room-card, .job-card, .nav-item__pill, .grade-chip, .menu-item):hover::after { opacity: 0.08; }
+:where(.filled-button, .filled-tonal-button, .outlined-button, .text-button, .icon-button, .fab, .room-card, .job-card, .nav-item__pill, .grade-chip, .menu-item):focus-visible::after,
+:where(.filled-button, .filled-tonal-button, .outlined-button, .text-button, .icon-button, .fab, .room-card, .job-card, .nav-item__pill, .grade-chip, .menu-item):active::after { opacity: 0.10; }
+:where(button, a, [role="button"]):focus-visible { outline: 2px solid var(--md-sys-color-primary); outline-offset: 2px; }
+
+/* M3 buttons: fully rounded at all times; press uses a spatial spring instead of angular corners */
+.filled-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 0 16px; border: none; border-radius: var(--md-shape-full); background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font: inherit; font-size: 14px; font-weight: 500; letter-spacing: 0.1px; cursor: pointer; touch-action: manipulation; transition: transform var(--md-dur-spatial) var(--md-sys-motion-spatial-fast); }
+.filled-button:active, .filled-tonal-button:active, .outlined-button:active, .icon-button:active, .text-button:active { transform: scale(0.97); }
+.filled-button:disabled { background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface-variant); }
+.filled-tonal-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 0 16px; border: none; border-radius: var(--md-shape-full); background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); font: inherit; font-size: 14px; font-weight: 500; letter-spacing: 0.1px; cursor: pointer; touch-action: manipulation; transition: transform var(--md-dur-spatial) var(--md-sys-motion-spatial-fast); }
+.filled-button .material-icons, .filled-tonal-button .material-icons { font-size: 20px; }
+.outlined-button { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px; border: 1px solid var(--md-sys-color-outline-variant); border-radius: var(--md-shape-full); background: transparent; color: var(--md-sys-color-on-surface-variant); font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; transition: transform var(--md-dur-spatial) var(--md-sys-motion-spatial-fast); }
+.text-button { border: none; background: transparent; color: var(--md-sys-color-primary); font: inherit; font-size: 14px; font-weight: 500; padding: 12px 8px; cursor: pointer; transition: transform var(--md-dur-spatial) var(--md-sys-motion-spatial-fast); }
+.icon-button { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; padding: 12px; border: none; border-radius: var(--md-shape-full); background: transparent; color: var(--md-sys-color-on-surface-variant); cursor: pointer; transition: transform var(--md-dur-spatial) var(--md-sys-motion-spatial-fast); }
+.icon-button .material-icons { font-size: 24px; }
+.fab { position: fixed; right: 16px; bottom: 16px; width: 56px; height: 56px; border: none; border-radius: var(--md-shape-full); overflow: hidden; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.3), 0 1px 18px 0 rgba(0, 0, 0, 0.15); cursor: pointer; transition: transform var(--md-dur-spatial) var(--md-sys-motion-spatial-fast); }
+.fab:active { transform: scale(0.94); }
+
+/* ---- text fields ---- */
+.textfield { position: relative; margin: 0 0 20px; }
+.textfield__input { width: 100%; box-sizing: border-box; border: 2px solid var(--md-sys-color-outline-variant); border-radius: 20px; background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); font: inherit; font-size: 14px; padding: 20px 12px 10px 12px; outline: none; transition: border-color var(--md-dur-default) var(--md-sys-motion-effects-default); }
+.textfield__input::placeholder { color: var(--md-sys-color-on-surface-variant); }
+.textfield__input:focus { border-color: var(--md-sys-color-primary); }
+.textfield__label { position: absolute; left: 14px; top: 16px; font-size: 11px; color: var(--md-sys-color-on-surface-variant); background: var(--md-sys-color-surface); padding: 0 2px; pointer-events: none; white-space: nowrap; transition: top var(--md-dur-spatial) var(--md-sys-motion-spatial-fast), font-size var(--md-dur-spatial) var(--md-sys-motion-spatial-fast), color var(--md-dur-default) var(--md-sys-motion-effects-default); }
+.textfield.has-value .textfield__label, .textfield:focus-within .textfield__label { top: 7px; font-size: 10px; color: var(--md-sys-color-on-surface-variant); }
+.textfield:focus-within .textfield__label { color: var(--md-sys-color-primary); }
+.textfield select.textfield__input { appearance: none; padding-right: 42px; }
+textarea.textfield__input { resize: vertical; min-height: 84px; }
+/* cards */
+.card { background: var(--md-sys-color-surface); border-radius: 16px; padding: 16px; margin: 0 0 12px; box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.12), 0 1px 5px 0 rgba(0, 0, 0, 0.2); }
+.card-heading { font-size: 14px; font-weight: 500; margin: 0 0 8px; }
+.card-body { font-size: 13px; line-height: 18px; white-space: pre-wrap; }
+
+/* job cards */
+.job-card { background: var(--md-sys-color-surface); border-radius: 16px; padding: 14px; margin: 0 0 12px; box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.12), 0 1px 5px 0 rgba(0, 0, 0, 0.2); cursor: pointer; touch-action: manipulation; }
+.job-card:active { opacity: 0.92; }
+.job-card { transition: opacity var(--md-dur-default) var(--md-sys-motion-effects-default); }
+.job-card__top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.job-card__subject { font-size: 11px; color: var(--md-sys-color-on-surface-variant); white-space: nowrap; }
+.job-card__room { font-size: 11px; color: var(--md-sys-color-on-surface-variant); white-space: nowrap; }
+.job-card__title { font-size: 15px; font-weight: 500; margin: 6px 0 4px; line-height: 20px; }
+.job-card__meta { font-size: 11px; color: var(--md-sys-color-on-surface-variant); margin: 0 0 6px; }
+.job-card__status { font-size: 11px; }
+.status--error { color: var(--md-sys-color-error); }
+.status--muted { color: var(--md-sys-color-on-surface-variant); }
+
+/* forms */
+.form-section { background: var(--md-sys-color-surface); border-radius: 16px; padding: 16px; margin: 0 0 12px; box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.12), 0 1px 5px 0 rgba(0, 0, 0, 0.2); }
+.form-section__title { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.form-row--two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+#job-submit { margin-top: 8px; }
+
+/* files & links */
+.file-row { display: flex; align-items: center; gap: 8px; background: var(--md-sys-color-surface-container-low); border-radius: 12px; padding: 10px; margin: 8px 0; }
+.file-row__link { display: inline-flex; align-items: center; gap: 6px; color: var(--md-sys-color-on-surface); font-size: 13px; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-row__link .material-icons { font-size: 18px; flex-shrink: 0; }
+.file-row__remove { margin-left: auto; }
+.file-list-ul { list-style: none; margin: 0; padding: 0; }
+.file-list-ul li { margin: 4px 0; }
+.link-list-ul { list-style: none; margin: 0; padding: 0; }
+.link-list-ul li { margin-bottom: 8px; }
+.link-row__link { display: inline-flex; align-items: center; gap: 6px; color: var(--md-sys-color-primary); font-size: 13px; text-decoration: underline; text-underline-offset: 3px; padding: 4px 0; }
+.link-row__link .material-icons { font-size: 18px; flex-shrink: 0; }
+.link-input { width: 100%; padding: 8px; border: 2px solid var(--md-sys-color-outline-variant); border-radius: 20px; background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); font-size: 13px; transition: border-color var(--md-dur-default) var(--md-sys-motion-effects-default); }
+.link-input:focus { outline: none; border-color: var(--md-sys-color-primary); }
+
+/* detail */
+.detail-title { font-size: 16px; font-weight: 500; margin: 0; }
+.detail-meta { display: flex; flex-direction: column; gap: 8px; }
+.detail-meta-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--md-sys-color-on-surface-variant); }
+.detail-meta-row .material-icons { font-size: 18px; flex-shrink: 0; color: var(--md-sys-color-primary); }
+.detail-meta-row--error { color: var(--md-sys-color-error); }
+.detail-meta-row--muted { color: var(--md-sys-color-on-surface-variant); }
+
+/* profile */
+.profile-avatar-wrap { text-align: center; padding: 12px 0 16px; }
+.profile-avatar { width: 64px; height: 64px; font-size: 24px; }
+.profile-upload { display: block; margin: 0 auto; }
+.profile-sub { text-align: center; font-size: 11px; color: var(--md-sys-color-on-surface-variant); margin-top: 8px; }
+.card .filled-tonal-button { margin-top: 12px; width: 100%; }
+
+/* menu / flash / login */
+.menu { position: fixed; z-index: 20; display: flex; flex-direction: column; min-width: 200px; max-width: calc(100vw - 16px); background: var(--md-sys-color-surface); border-radius: var(--md-shape-xl); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2), 0 6px 6px rgba(0, 0, 0, 0.1); padding: 8px 0; }
+.menu[hidden] { display: none; }
+.menu-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; margin: 0 8px; border-radius: var(--md-shape-full); font-size: 14px; color: var(--md-sys-color-on-surface); cursor: pointer; }
+.menu-item:active { background: var(--md-sys-color-surface-container); }
+.flash { display: none; position: fixed; left: 50%; transform: translateX(-50%); top: calc(env(safe-area-inset-top, 0px) + 16px); z-index: 50; background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface); font-size: 13px; border-radius: var(--md-shape-full); padding: 8px 16px; box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.12), 0 1px 5px 0 rgba(0, 0, 0, 0.2); }
+.flash--show { display: block; }
+.login-screen { padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 16px; min-height: 100vh; }
+.login-logo { font-size: 52px; color: var(--md-sys-color-primary); margin-top: 40px; }
+.login-sub { font-size: 13px; color: var(--md-sys-color-on-surface-variant); margin: 0; }
+.login-form { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+.form-footer { margin-top: 8px; }
+
+/* ---- M3 Expressive shape variety (token-based radii) ---- */
+.fab.m3y-squircle {
+  border-radius: 28px;
+  transition: transform var(--md-dur-spatial) var(--md-sys-motion-spatial-fast);
+}
+.fab.m3y-squircle:active,
+.fab.m3y-squircle.is-open { border-radius: 24px; }
+.fab.m3y-squircle.is-open:active { transform: scale(0.94); }
+.fab-menu { position: fixed; right: 16px; bottom: 164px; z-index: 16; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+.fab-menu[hidden] { display: none; }
+.fab-menu-item { min-height: 48px; padding: 0 20px; border: none; border-radius: var(--md-shape-full); font: inherit; font-size: 16px; font-weight: 500; cursor: pointer; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25); animation: m3-fade 200ms var(--md-sys-motion-effects-default) backwards, fab-rise 350ms var(--md-sys-motion-spatial-fast) backwards; }
+.fab-menu-item:nth-child(2) { animation-delay: 40ms; }
+.fab-menu-item:nth-child(3) { animation-delay: 80ms; }
+@keyframes fab-rise { from { transform: translateY(16px) scale(0.9); } to { transform: translateY(0) scale(1); } }
+.job-card:nth-child(odd), .job-card:nth-child(even) { border-radius: var(--md-shape-xl); }
+.job-card__subject { font-size: 11px; white-space: nowrap; color: var(--md-sys-color-quaternary); }
+
+/* ---- bottom navigation (M3 Expressive: selected item shows label) ---- */
+.nav-bar {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 12px;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 68px;
+  padding: 6px 10px;
+  background: var(--md-sys-color-surface-container);
+  border-radius: var(--md-shape-xl);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  touch-action: pan-y;
+  transition: transform 300ms var(--md-sys-motion-spatial-smooth);
+  animation: m3-fade var(--md-dur-default) var(--md-sys-motion-effects-default),
+             m3-rise var(--md-dur-spatial) var(--md-sys-motion-spatial-fast);
+}
+.nav-item {
+  min-width: 56px;
+  min-height: 52px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.nav-item__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 52px;
+  padding: 0 16px;
+  border-radius: var(--md-shape-full);
+  color: var(--md-sys-color-on-surface-variant);
+  /* spatial spring for the pill width (one axis); effects spring for color */
+  transition: padding var(--md-dur-smooth) var(--md-sys-motion-spatial-smooth),
+              transform var(--md-dur-smooth) var(--md-sys-motion-spatial-smooth),
+              background var(--md-dur-effects-slow) var(--md-sys-motion-effects-slow),
+              color var(--md-dur-effects-slow) var(--md-sys-motion-effects-slow);
+  will-change: padding, transform;
+}
+.nav-item.active .nav-item__pill {
+  padding: 0 20px;
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+.nav-item .material-icons { font-size: 24px; transition: transform var(--md-dur-smooth) var(--md-sys-motion-spatial-smooth); }
+.nav-avatar { flex-shrink: 0; border: 2px solid transparent; }
+.nav-item.active .nav-avatar { border-color: var(--md-sys-color-primary); }
+.nav-item.active .material-icons { font-variation-settings: 'FILL' 1; animation: m3-nav-icon var(--md-dur-smooth) var(--md-sys-motion-spatial-smooth); }
+@keyframes m3-nav-icon { from { transform: translateX(6px); } to { transform: translateX(0); } }
+.nav-item__label { font-size: 13px; font-weight: 500; white-space: nowrap; }
+.nav-item.active .nav-item__label {
+  font-weight: 700;
+  animation: m3-fade var(--md-dur-effects-slow) var(--md-sys-motion-effects-slow),
+             m3-nav-label var(--md-dur-smooth) var(--md-sys-motion-spatial-smooth);
+}
+.nav-bar.is-dragging .nav-item.active .nav-item__label {
+  animation-timing-function: var(--md-sys-motion-effects-slow), var(--md-sys-motion-spatial-smooth);
+}
+@keyframes m3-nav-label { from { transform: translateX(-8px); } to { transform: translateX(0); } }
+.nav-item:active .nav-item__pill { transform: scale(0.94); }
+.nav-bar.is-dragging .nav-item__pill {
+  transition: padding var(--md-dur-smooth) var(--md-sys-motion-spatial-smooth),
+              transform var(--md-dur-smooth) var(--md-sys-motion-spatial-smooth),
+              background var(--md-dur-effects-slow) var(--md-sys-motion-effects-slow),
+              color var(--md-dur-effects-slow) var(--md-sys-motion-effects-slow);
+}
+
+.screen-main--nav { padding-bottom: 112px; }
+.fab { bottom: 96px; }
+
+/* ---- grade chip + room grid ---- */
+.dash-subbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px 0;
+}
+.grade-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 20px;
+  border: 2px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-shape-full);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.grade-chip .material-icons { font-size: 20px; }
+.filter-chip { display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 12px; margin-left: 8px; border: none; border-radius: var(--md-shape-full); background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.filter-chip .material-icons { font-size: 18px; }
+.room-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 8px;
+}
+.room-card {
+  --b1w: 72%; --b1h: 66%; --b1x: 48%; --b1y: -12%;
+  --b1r: 42% 58% 70% 30% / 45% 35% 65% 55%;
+  --b2w: 62%; --b2h: 58%; --b2x: -14%; --b2y: 58%;
+  --b2r: 60% 40% 35% 65% / 55% 60% 40% 45%;
+  --b2o: 1;
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-shape-xl);
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  font: inherit;
+  font-size: 28px;
+  font-weight: 500;
+  box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.12), 0 1px 5px 0 rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  touch-action: pan-y;
+  transition: transform var(--md-dur-spatial) var(--md-sys-motion-spatial-fast),
+              border-radius var(--md-dur-spatial) var(--md-sys-motion-spatial-fast);
+}
+.room-card.is-swiping { transition: none !important; z-index: 3; background: transparent; border-color: transparent; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3); }
+.room-card.is-leaving { transition: transform 350ms var(--md-sys-motion-spatial-smooth), opacity 250ms var(--md-sys-motion-effects-slow); pointer-events: none; }
+.room-swipe-bg { position: absolute; inset: 0; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 6px; background: color-mix(in srgb, var(--md-sys-color-primary) 26%, transparent); color: var(--md-sys-color-on-primary-container); font-size: 12px; font-weight: 500; opacity: 0; pointer-events: none; }
+.room-card.is-swiping .room-swipe-bg { opacity: 1; }
+.room-card.swipe-left .room-swipe-bg { background: color-mix(in srgb, var(--md-sys-color-error) 22%, transparent); }
+.room-blob { position: absolute; pointer-events: none; z-index: 0; }
+.room-blob--a { width: var(--b1w); height: var(--b1h); left: var(--b1x); top: var(--b1y); border-radius: var(--b1r); background: var(--md-sys-color-primary); opacity: 0.16; }
+.room-blob--b { width: var(--b2w); height: var(--b2h); left: var(--b2x); top: var(--b2y); border-radius: var(--b2r); background: var(--md-sys-color-primary); opacity: calc(0.10 * var(--b2o)); }
+.room-card__label { position: relative; z-index: 2; }
+.room-card.shape-1 { --b1x: -12%; --b1y: -10%; --b1r: 62% 38% 55% 45% / 50% 58% 42% 50%; --b2x: 46%; --b2y: 56%; --b2r: 38% 62% 48% 52% / 60% 40% 60% 40%; }
+.room-card.shape-2 { --b1x: 40%; --b1y: 50%; --b1r: 30% 70% 62% 38% / 40% 60% 40% 60%; --b2x: -10%; --b2y: -12%; --b2r: 70% 30% 40% 60% / 35% 65% 45% 55%; }
+.room-card.shape-3 { --b1x: 52%; --b1y: -14%; --b1w: 60%; --b1h: 60%; --b1r: 50%; --b2o: 0; }
+.room-card.shape-4 { --b1x: -16%; --b1y: 48%; --b1r: 48% 52% 65% 35% / 60% 45% 55% 40%; --b2x: 44%; --b2y: -14%; --b2r: 65% 35% 45% 55% / 45% 55% 45% 55%; }
+.room-card.shape-5 { --b1x: 34%; --b1y: 34%; --b1w: 70%; --b1h: 70%; --b1r: 48% 52% 60% 40% / 55% 45% 60% 40%; --b2o: 0; }
+.room-card.shape-6 { --b1x: -8%; --b1y: -16%; --b1w: 85%; --b1h: 55%; --b1r: 45% 55% 40% 60% / 55% 45% 60% 40%; --b2x: 30%; --b2y: 60%; --b2w: 55%; --b2h: 55%; --b2r: 50%; }
+.room-card.shape-7 { --b1x: 55%; --b1y: 40%; --b1w: 58%; --b1h: 78%; --b1r: 45% 55% 35% 65% / 35% 65% 35% 65%; --b2o: 0; }
+.room-card.shape-8 { --b1x: -18%; --b1y: 20%; --b1r: 35% 65% 40% 60% / 60% 35% 65% 40%; --b2x: 40%; --b2y: -18%; --b2r: 35% 65% 50% 50% / 60% 40% 60% 40%; }
+.room-card.shape-9 { --b1x: 20%; --b1y: -20%; --b1w: 65%; --b1h: 65%; --b1r: 50%; --b2x: -20%; --b2y: 55%; --b2w: 70%; --b2h: 50%; --b2r: 70% 30% 45% 55% / 45% 55% 45% 55%; }
+.room-card.shape-10 { --b1x: 48%; --b1y: 8%; --b1w: 70%; --b1h: 70%; --b1r: 28% 72% 45% 55% / 55% 45% 55% 45%; --b2o: 0; }
+.room-card.shape-11 { --b1x: -14%; --b1y: -8%; --b1w: 75%; --b1h: 75%; --b1r: 40% 60% 50% 50% / 50% 50% 50% 50%; --b2x: 38%; --b2y: 52%; --b2w: 60%; --b2h: 60%; --b2r: 48% 52% 60% 40% / 55% 45% 55% 45%; }
+.room-card.shape-12 { --b1x: 42%; --b1y: 44%; --b1w: 62%; --b1h: 62%; --b1r: 40% 60% 45% 55% / 50% 50% 55% 45%; --b2x: -12%; --b2y: -14%; --b2w: 62%; --b2h: 62%; --b2r: 40% 60% 60% 40% / 60% 40% 60% 40%; }
+.room-card:active { transform: scale(0.96); border-radius: var(--md-shape-xl); }
+.room-title { font-size: 15px; font-weight: 500; margin: 4px 0 8px; }
+
+/* ---- profile page (M3 outlined sections with floating labels) ---- */
+.profile-page { display: flex; flex-direction: column; }
+.profile-banner { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; height: 128px; overflow: hidden; border-radius: 0 0 var(--md-shape-xl) var(--md-shape-xl); background: var(--md-sys-color-primary-container); transform-origin: right top; transition: height 120ms var(--md-sys-motion-effects-default); will-change: height; }
+.banner-blob { position: absolute; display: block; }
+.banner-blob--a { width: 60%; height: 150%; top: -45%; right: -8%; border-radius: 44% 56% 62% 38% / 52% 40% 60% 48%; background: var(--md-sys-color-primary); opacity: 0.28; }
+.banner-blob--b { width: 48%; height: 115%; bottom: -55%; left: -6%; border-radius: 58% 42% 36% 64% / 45% 58% 42% 55%; background: var(--md-sys-color-secondary); opacity: 0.34; }
+.banner-blob--c { width: 34%; height: 100%; top: 8%; left: 42%; border-radius: 50% 50% 38% 62% / 60% 40% 60% 40%; background: var(--md-sys-color-tertiary); opacity: 0.2; }
+.profile-banner.has-image .banner-blob { display: none; }
+.banner-edit { position: absolute; right: 16px; top: 16px; z-index: 3; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: none; border-radius: var(--md-shape-full); background: color-mix(in srgb, var(--md-sys-color-surface) 70%, transparent); color: var(--md-sys-color-on-surface); cursor: pointer; }
+.banner-edit .material-icons { font-size: 22px; }
+.profile-header { position: relative; z-index: 2; display: flex; align-items: center; gap: 16px; width: 100%; padding: 0 16px; }
+.profile-avatar-btn { width: 96px; height: 96px; padding: 0; border: none; border-radius: var(--md-shape-full); background: transparent; cursor: pointer; flex-shrink: 0; }
+.profile-avatar-btn .avatar { width: 88px; height: 88px; font-size: 32px; }
+.profile-ident { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.profile-ident__name { font-size: 24px; font-weight: 500; letter-spacing: 0; color: var(--md-sys-color-primary); text-shadow: 0 1px 4px rgba(255, 255, 255, 0.55); overflow-wrap: anywhere; }
+.profile-ident__user { font-size: 14px; color: color-mix(in srgb, var(--md-sys-color-primary) 60%, black); text-shadow: 0 1px 4px rgba(255, 255, 255, 0.55); overflow-wrap: anywhere; transition: opacity 200ms var(--md-sys-motion-effects-default); }
+.profile-banner.banner-light .profile-ident__user { color: color-mix(in srgb, var(--md-sys-color-primary) 60%, black); text-shadow: 0 1px 4px rgba(255, 255, 255, 0.6); }
+.profile-banner.banner-dark .profile-ident__user { color: color-mix(in srgb, var(--md-sys-color-primary) 55%, white); text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5); }
+.profile-banner.banner-light .profile-ident__name { color: var(--md-sys-color-primary); text-shadow: 0 1px 4px rgba(255, 255, 255, 0.6); }
+.profile-banner.banner-dark .profile-ident__name { color: color-mix(in srgb, var(--md-sys-color-primary) 35%, white); text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5); }
+.profile-section { position: relative; margin: 20px 16px 0; padding: 26px 16px 16px; border: 1px solid var(--md-sys-color-outline-variant); border-radius: var(--md-shape-xl); background: var(--md-sys-color-surface); }
+.profile-section__label { position: absolute; top: 0; left: 16px; transform: translateY(-50%); padding: 4px 12px; border-radius: var(--md-shape-full); background: var(--md-sys-color-surface); font-size: 12px; font-weight: 500; color: var(--md-sys-color-on-surface-variant); }
+.profile-section__body { display: flex; align-items: flex-end; gap: 12px; }
+.profile-section__body .textfield { flex: 1; margin: 0; }
+.profile-section__body:not(.profile-section__body--stack) .textfield__input { padding-top: 10px; }
+.profile-section__body--stack { flex-direction: column; align-items: stretch; }
+.profile-section__body--stack .textfield { width: 100%; margin: 0; }
+.profile-small-btn { min-height: 40px; padding: 0 16px; flex-shrink: 0; }
+.profile-small-btn--end { align-self: flex-end; }
+.profile-logout { align-self: flex-start; margin: 16px; }
+.changelog-row { display: flex; align-items: flex-start; gap: 12px; }
+.changelog-row > .material-icons { color: var(--md-sys-color-primary); flex-shrink: 0; }
+.changelog-title { font-size: 14px; font-weight: 500; color: var(--md-sys-color-on-surface); }
+.changelog-sub { font-size: 12px; color: var(--md-sys-color-on-surface-variant); margin-top: 4px; }
+
+/* ---- job images + optional form actions ---- */
+.form-section__actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.add-header { display: flex; gap: 16px; align-items: center; padding: 20px 16px 4px; }
+.add-header > .material-icons { font-size: 40px; color: var(--md-sys-color-primary); }
+.add-sub { margin: 4px 0 0; font-size: 14px; color: var(--md-sys-color-on-surface-variant); }
+.crop-hint { font-size: 13px; color: var(--md-sys-color-on-surface-variant); margin: 8px 0 0; }
+.crop-preview { width: min(78vw, 320px); aspect-ratio: 1 / 1; margin: 8px auto; border-radius: var(--md-shape-xl); background-color: var(--md-sys-color-surface-variant); background-repeat: no-repeat; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25); touch-action: none; cursor: grab; }
+.crop-zoom-row { display: flex; align-items: center; gap: 12px; }
+.crop-zoom-row input { flex: 1; accent-color: var(--md-sys-color-primary); }
+#crop-save { margin-top: 8px; }
+#job-submit { width: 100%; margin-top: 8px; }
+.file-thumb { width: 28px; height: 28px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+.job-delete { align-self: flex-start; }
+.job-gallery { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.job-image { margin: 0; }
+.job-image img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: var(--md-shape-lg); display: block; }
+.job-image figcaption { font-size: 11px; color: var(--md-sys-color-on-surface-variant); margin-top: 4px; overflow-wrap: anywhere; }
+.comment-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+.comment-item { display: flex; gap: 10px; align-items: flex-start; }
+.comment-avatar { width: 32px; height: 32px; border-radius: var(--md-shape-full); background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); display: flex; align-items: center; justify-content: center; font-weight: 500; flex-shrink: 0; }
+.comment-body { flex: 1; min-width: 0; }
+.comment-meta { font-size: 11px; color: var(--md-sys-color-on-surface-variant); }
+.comment-text { font-size: 14px; color: var(--md-sys-color-on-surface); margin-top: 2px; overflow-wrap: anywhere; white-space: pre-wrap; }
+.poster-chip { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: none; background: transparent; color: var(--md-sys-color-on-surface-variant); font: inherit; font-size: 11px; cursor: pointer; }
+.poster-avatar { width: 20px; height: 20px; border-radius: var(--md-shape-full); display: inline-flex; align-items: center; justify-content: center; background-color: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); background-size: cover; background-position: center; background-repeat: no-repeat; font-size: 11px; flex-shrink: 0; }
+.poster-scrim { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.5); }
+.poster-scrim[hidden] { display: none; }
+.poster-dialog { width: min(85vw, 320px); padding: 24px; border-radius: var(--md-shape-xl); background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); text-align: center; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3); }
+.poster-avatar-large { width: 80px; height: 80px; margin: 0 auto 12px; border-radius: var(--md-shape-full); display: flex; align-items: center; justify-content: center; background-color: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); background-size: cover; background-position: center; font-size: 28px; }
+.poster-username { font-size: 13px; color: var(--md-sys-color-on-surface-variant); margin: 4px 0 16px; }
+.poster-dlg-actions { display: flex; gap: 8px; }
+.poster-dlg-actions .filled-tonal-button { flex: 1; }
+.comment-compose { display: flex; gap: 8px; align-items: center; }
+.comment-compose .textfield__input { flex: 1; padding: 10px 14px; border-radius: var(--md-shape-full); }
+.comment-compose .icon-button { color: var(--md-sys-color-primary); }
+
+/* ---- likes, followed rooms, home ---- */
+.job-card__top { padding-right: 36px; }
+.job-like { position: absolute; right: 6px; top: 6px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: none; border-radius: var(--md-shape-full); background: transparent; color: var(--md-sys-color-on-surface-variant); cursor: pointer; }
+.job-like .material-icons { font-size: 22px; }
+.job-like.is-liked .material-icons, .job-like-detail.is-liked .material-icons { font-variation-settings: 'FILL' 1; }
+.heart-pop { animation: heart-pop 400ms var(--md-sys-motion-spatial-fast); }
+@keyframes heart-pop { 0% { transform: scale(1); } 40% { transform: scale(1.35); } 70% { transform: scale(0.9); } 100% { transform: scale(1); } }
+.job-like-detail { align-self: flex-start; }
+.room-hint { font-size: 12px; color: var(--md-sys-color-on-surface-variant); margin: 0 0 4px; }
+.room-follow { position: absolute; right: 10px; bottom: 10px; z-index: 2; color: var(--md-sys-color-on-primary-container); }
+.room-follow .material-icons { font-size: 20px; }
+.home-section-title { font-size: 13px; font-weight: 500; color: var(--md-sys-color-on-surface-variant); margin: 4px 0 8px; }
+.home-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.home-chip { display: inline-flex; align-items: center; padding: 6px 12px; border-radius: var(--md-shape-full); background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); font-size: 12px; font-weight: 500; }
+
+/* ---- motion: screen enter + menu reveal (spatial for geometry, effects for opacity) ---- */
+#app.screen-enter > .top-app-bar,
+#app.screen-enter > .dash-subbar,
+#app.screen-enter > .screen-main,
+#app.screen-enter > .profile-page,
+#app.screen-enter > .login-screen {
+  animation: m3-fade var(--md-dur-default) var(--md-sys-motion-effects-default),
+             m3-slide-in var(--md-dur-spatial) var(--md-sys-motion-spatial-fast);
+  will-change: transform, opacity;
+}
+@keyframes m3-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes m3-rise { from { transform: translate3d(0, 8px, 0); } to { transform: translate3d(0, 0, 0); } }
+@keyframes m3-slide-in { from { transform: translate3d(24px, 0, 0); } to { transform: translate3d(0, 0, 0); } }
+.menu:not([hidden]) {
+  animation: m3-fade var(--md-dur-default) var(--md-sys-motion-effects-default),
+             m3-menu-scale var(--md-dur-spatial) var(--md-sys-motion-spatial-fast);
+  transform-origin: top right;
+}
+@keyframes m3-menu-scale { from { transform: scale(0.92); } to { transform: scale(1); } }
+/* ---- micro-interactions (my design decisions; token-based curves) ---- */
+.job-card { transition: opacity var(--md-dur-default) var(--md-sys-motion-effects-default), transform var(--md-dur-spatial) var(--md-sys-motion-spatial-fast); }
+.job-card:not(:active):hover { transform: translateY(-2px); }
+.fab:not(:active):hover { transform: translateY(-2px); }
+.menu-item { transition: transform var(--md-dur-spatial) var(--md-sys-motion-spatial-fast); }
+.menu-item:hover { transform: translateX(4px); }
+.grade-chip { transition: transform var(--md-dur-spatial) var(--md-sys-motion-spatial-fast), border-color var(--md-dur-default) var(--md-sys-motion-effects-default); }
+.grade-chip:active { transform: scale(0.96); }
+.flash.flash--show {
+  animation: m3-fade var(--md-dur-default) var(--md-sys-motion-effects-default),
+             m3-rise var(--md-dur-spatial) var(--md-sys-motion-spatial-default);
+}
+/* Reduce motion — my design decision; M3 has no official scheme-swap rule */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+html[data-mode="dark"] {
+  color-scheme: dark;
+  --md-sys-color-primary: color-mix(in srgb, var(--scheme-primary, #4C1D95) 42%, white);
+  --md-sys-color-on-primary: #1A0A33;
+  --md-sys-color-primary-container: color-mix(in srgb, var(--scheme-primary, #4C1D95) 32%, black);
+  --md-sys-color-on-primary-container: color-mix(in srgb, var(--scheme-primary, #4C1D95) 12%, white);
+  --md-sys-color-secondary: color-mix(in srgb, var(--scheme-secondary, #6D28D9) 52%, white);
+  --md-sys-color-secondary-container: color-mix(in srgb, var(--scheme-secondary, #6D28D9) 28%, black);
+  --md-sys-color-on-secondary-container: color-mix(in srgb, var(--scheme-secondary, #6D28D9) 10%, white);
+  --md-sys-color-tertiary: color-mix(in srgb, var(--scheme-tertiary, #7C3AED) 52%, white);
+  --md-sys-color-error: #FFB4AB;
+  --md-sys-color-on-error: #690005;
+  --md-sys-color-error-container: #93000A;
+  --md-sys-color-on-error-container: #FFDAD6;
+  --md-sys-color-background: color-mix(in srgb, var(--scheme-primary, #4C1D95) 8%, #0E0A14);
+  --md-sys-color-on-background: color-mix(in srgb, var(--scheme-primary, #4C1D95) 8%, white);
+  --md-sys-color-surface: color-mix(in srgb, var(--scheme-primary, #4C1D95) 12%, #140E1C);
+  --md-sys-color-on-surface: color-mix(in srgb, var(--scheme-primary, #4C1D95) 8%, white);
+  --md-sys-color-surface-variant: color-mix(in srgb, var(--scheme-primary, #4C1D95) 22%, #1C1428);
+  --md-sys-color-on-surface-variant: color-mix(in srgb, var(--scheme-primary, #4C1D95) 20%, #D8D4E0);
+  --md-sys-color-surface-container: color-mix(in srgb, var(--scheme-primary, #4C1D95) 18%, #17111F);
+  --md-sys-color-surface-container-low: color-mix(in srgb, var(--scheme-primary, #4C1D95) 14%, #130D1A);
+  --md-sys-color-surface-container-high: color-mix(in srgb, var(--scheme-primary, #4C1D95) 26%, #20162C);
+  --md-sys-color-inverse-surface: #E6E1E5;
+  --md-sys-color-inverse-on-surface: #1C1B1F;
+  --md-sys-color-inverse-primary: #C4B5FD;
+  --md-sys-color-outline: #9E9EA3;
+  --md-sys-color-outline-variant: #45474C;
+}
+html[data-mode="dark"] .flash { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45); }
+html[data-mode="dark"] .card,
+html[data-mode="dark"] .job-card,
+html[data-mode="dark"] .room-card,
+html[data-mode="dark"] .form-section,
+html[data-mode="dark"] .nav-bar { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45); }
+html[data-mode="dark"] .nav-bar {
+  background: color-mix(in srgb, var(--scheme-primary, #4C1D95) 16%, #17111F);
+  border: 1px solid color-mix(in srgb, var(--scheme-primary, #4C1D95) 24%, #45474C);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+html[data-mode="dark"] .nav-item.active .nav-item__pill {
+  background: color-mix(in srgb, var(--md-sys-color-primary) 30%, var(--md-sys-color-surface-container-high));
+  color: color-mix(in srgb, var(--md-sys-color-primary) 15%, white);
+}
+html[data-mode="dark"] .nav-item:not(.active) .nav-item__pill { color: color-mix(in srgb, var(--md-sys-color-primary) 12%, #C9C4D2); }
+
+/* ---- selectable color schemes (all in one purple family) ---- */
+html[data-color="blue"] {
+  --scheme-primary: #0B4F9C;
+  --scheme-primary-container: #D7E8FF;
+  --scheme-on-primary-container: #003366;
+  --scheme-secondary: #1D6FB8;
+  --scheme-secondary-container: #E1F0FF;
+  --scheme-on-secondary-container: #003B5C;
+  --scheme-tertiary: #2E7DB2;
+  --scheme-tertiary-container: #DCEFFB;
+}
+html[data-color="green"] {
+  --scheme-primary: #1B6B3A;
+  --scheme-primary-container: #D6F5DC;
+  --scheme-on-primary-container: #0A3517;
+  --scheme-secondary: #2E7D4F;
+  --scheme-secondary-container: #E2F5E7;
+  --scheme-on-secondary-container: #123B22;
+  --scheme-tertiary: #3F8F5C;
+  --scheme-tertiary-container: #E8F7EC;
+}
+html[data-color="orange"] {
+  --scheme-primary: #9A4A00;
+  --scheme-primary-container: #FFE2CC;
+  --scheme-on-primary-container: #5C2900;
+  --scheme-secondary: #B45309;
+  --scheme-secondary-container: #FBECD8;
+  --scheme-on-secondary-container: #5A3000;
+  --scheme-tertiary: #C2610E;
+  --scheme-tertiary-container: #FFF0E0;
+}
+html[data-color="pink"] {
+  --scheme-primary: #9D174D;
+  --scheme-primary-container: #FBDCE8;
+  --scheme-on-primary-container: #620E33;
+  --scheme-secondary: #BE185D;
+  --scheme-secondary-container: #FCE4EC;
+  --scheme-on-secondary-container: #701A42;
+  --scheme-tertiary: #DB2777;
+  --scheme-tertiary-container: #FDE8F1;
+}
+.color-options { display: flex; gap: 12px; flex-wrap: wrap; }
+.color-swatch { width: 48px; height: 48px; border-radius: var(--md-shape-full); border: 3px solid transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #FFFFFF; }
+.color-swatch.selected { border-color: var(--md-sys-color-primary); }
+.color-swatch .material-icons { font-size: 20px; }
+.mode-option.selected { background: var(--md-sys-color-secondary); color: var(--md-sys-color-on-secondary); }
+
+</style>
+</head>
+<body>
+<svg style="display:none" aria-hidden="true"><defs>
+  <path id="m3y-blob-a" transform="scale(3)" d="M30 5 C62 8 85 22 85 44 C85 62 68 78 46 84 C24 90 8 76 8 52 C8 26 22 10 30 5 Z"/>
+  <path id="m3y-blob-b" transform="scale(3.2)" d="M50 6 C70 10 82 26 80 44 C78 60 62 73 44 78 C26 83 12 69 12 50 C12 30 26 14 50 6 Z"/>
+</defs></svg>
+<div id="app"></div>
+<div id="nav-root"></div>
+<script>
+(function () {
+'use strict';
+/* ---- state ---- */
+const STORAGE_KEY = 'fak_jobs_v1';
+const GRADES = ['M.1', 'M.2', 'M.3', 'M.4', 'M.5', 'M.6'];
+const ROOMS_PER_LEVEL = 13;
+const SUBJECTS = [
+  'คณิตศาสตร์', 'วิทยาศาสตร์', 'ภาษาไทย', 'อังกฤษ',
+  'สังคมศึกษา', 'ประวัติศาสตร์', 'ศิลปะ', 'นาฎศิลป์', 'ภาษาจีน', 'ฟิสิกส์'
+];
+
+const state = { account: null, jobs: [], followedRooms: [] };
+let screen = 'login';
+let selectedJobId = null;
+let navTab = 'home';
+let selectedGrade = 'M.1';
+let currentRoom = null;
+let detailFrom = 'dashboard';
+let fabOpen = false;
+let newJobType = 'work';
+let cropSource = '';
+let cropZoom = 1;
+let cropX = 0;
+let cropY = 0;
+let lastProfileScroll = 0;
+let homeTypeFilter = '';
+let homeSubjectFilter = '';
+
+const JOB_TYPES = {
+  exam: ['นัดสอบ', 'event'],
+  answer: ['เฉลยงาน', 'ratings'],
+  work: ['ฝากงาน', 'assignment']
+};
+
+const COLOR_SCHEMES = [
+  ['purple', '#4C1D95', 'ม่วง'],
+  ['blue', '#0B4F9C', 'ฟ้า'],
+  ['green', '#1B6B3A', 'เขียว'],
+  ['orange', '#9A4A00', 'ส้ม'],
+  ['pink', '#9D174D', 'ชมพู']
+];
+let colorScheme = 'purple';
+let colorMode = 'light';
+
+function applySettings() {
+  const root = document.documentElement;
+  root.dataset.color = colorScheme;
+  root.dataset.mode = colorMode;
+  try {
+    localStorage.setItem('fak_color_scheme', colorScheme);
+    localStorage.setItem('fak_color_mode', colorMode);
+  } catch (e) {}
+}
+
+function loadSettings() {
+  let savedScheme = 'purple';
+  let savedMode = '';
+  try {
+    savedScheme = localStorage.getItem('fak_color_scheme') || 'purple';
+    savedMode = localStorage.getItem('fak_color_mode') || '';
+  } catch (e) {}
+  colorScheme = COLOR_SCHEMES.some(([key]) => key === savedScheme) ? savedScheme : 'purple';
+  colorMode = savedMode === 'dark' || savedMode === 'light'
+    ? savedMode
+    : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  applySettings();
+}
+
+function isFollowed(grade, room) {
+  return state.followedRooms.some((f) => f.grade === grade && f.room === room);
+}
+
+function toggleFollow(grade, room) {
+  const i = state.followedRooms.findIndex((f) => f.grade === grade && f.room === room);
+  if (i >= 0) state.followedRooms.splice(i, 1);
+  else state.followedRooms.push({ grade, room });
+  saveState();
+  render({ noAnim: true });
+}
+
+function toggleLike(jobId) {
+  const job = state.jobs.find((j) => j.id === jobId);
+  if (!job) return;
+  job.liked = !job.liked;
+  saveState();
+  render({ noAnim: true });
+  document.querySelectorAll('[data-like="' + jobId + '"] .material-icons').forEach((icon) => {
+    icon.classList.remove('heart-pop');
+    void icon.offsetWidth;
+    icon.classList.add('heart-pop');
+  });
+}
+
+/* ---- helpers ---- */
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function hashStr(s) {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36) + '-' + ((h * 31) >>> 0).toString(36);
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    state.account = parsed && parsed.account ? parsed.account : null;
+    state.jobs = parsed && Array.isArray(parsed.jobs) ? parsed.jobs : [];
+    state.followedRooms = parsed && Array.isArray(parsed.followedRooms) ? parsed.followedRooms : [];
+  } catch (e) {
+    state.account = null;
+    state.jobs = [];
+  }
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ account: state.account, jobs: state.jobs, followedRooms: state.followedRooms }));
+  } catch (e) { /* storage unavailable */ }
+}
+
+function go(name, jobId) {
+  screen = name;
+  selectedJobId = jobId || null;
+  render();
+}
+
+function setFlash(text) {
+  const el = document.getElementById('flash');
+  if (!el) return;
+  el.textContent = text || '';
+  el.classList.toggle('flash--show', !!text);
+}
+
+function syncTextfield(el) {
+  const wrap = el.closest('.textfield');
+  if (wrap) wrap.classList.toggle('has-value', !!el.value);
+}
+
+function syncTextfields() {
+  document.querySelectorAll('.textfield input, .textfield select, .textfield textarea').forEach(syncTextfield);
+}
+
+function roomsForGrade(grade) {
+  if (!GRADES.includes(grade)) return [];
+  const rooms = [];
+  for (let i = 1; i <= ROOMS_PER_LEVEL; i++) rooms.push(String(i));
+  return rooms;
+}
+
+function initials(account) {
+  const name = (account.name || account.username || '').trim();
+  const parts = name.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return parts[0][0] + parts[1][0];
+  return parts[0] ? parts[0][0] : account.username[0];
+}
+
+function avatarColor(seed) {
+  const colors = ['#6750A4', '#625B71', '#0061A4', '#00695C', '#37474F', '#795548', '#BF360C', '#43A047'];
+  let sum = 0;
+  for (const ch of (seed || '')) sum += ch.codePointAt(0);
+  return colors[sum % colors.length];
+}
+
+function avatarHtml(cls, size) {
+  const account = state.account;
+  if (!account) return '';
+  const pic = account.profilePic;
+  const base = `width: ${size}px; height: ${size}px; display: flex; align-items: center; justify-content: center; background-size: cover; background-position: center; font-weight: 500; border-radius: 50%;`;
+  if (pic) {
+    const crop = account.profilePicCrop;
+    const cropStyle = crop
+      ? `background-size: ${Math.round((crop.zoom || 1) * 100)}%; background-position: ${50 + (crop.x || 0) * 100}% ${50 + (crop.y || 0) * 100}%;`
+      : '';
+    return `<div class="avatar ${cls}" style="${base} ${cropStyle} background-image: url(&quot;${escapeHtml(pic)}&quot;);"></div>`;
+  }
+  return `<div class="avatar ${cls}" style="${base} background: ${avatarColor(account.username)}; color: #FFFFFF;">${escapeHtml(initials(account))}</div>`;
+}
+
+function fmtDateTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  return d.toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  const d = new Date(`${iso}T00:00:00`);
+  if (isNaN(d)) return iso;
+  return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function statusOf(job) {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  if (!job.dueDate) return { text: 'ยังไม่ระบุวันส่ง', tone: 'muted' };
+  if (job.dueDate < todayStr) return { text: 'เลยกำหนด', tone: 'error' };
+  if (job.dueDate > todayStr) return { text: 'ยังไม่ถึงวันที่ส่ง', tone: 'muted' };
+  return { text: 'ครบกำหนดวันนี้', tone: '' };
+}
+
+function fileToDataUrl(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => resolve('');
+    reader.readAsDataURL(file);
+  });
+}
+function renderLoginHtml() {
+  return `
+<main class="login-screen">
+  <div class="material-icons login-logo" aria-hidden="true">work</div>
+  <h1 class="t-display-medium">ฝากงาน</h1>
+  <p class="login-sub">เข้าสู่ระบบเพื่อเพิ่มและดูงานที่ฝากไว้</p>
+  <form id="login-form" class="login-form">
+    <div class="flash" id="flash" aria-live="polite"></div>
+    <div class="textfield">
+      <input id="login-username" class="textfield__input" type="text" autocomplete="username" autofocus>
+      <span class="textfield__label">Username</span>
+    </div>
+    <div class="textfield">
+      <input id="login-password" class="textfield__input" type="password" autocomplete="current-password">
+      <span class="textfield__label">Password</span>
+    </div>
+    <button class="filled-button" type="submit">เข้าสู่ระบบ</button>
+    <div class="form-footer">
+      <button type="button" class="text-button" id="login-signup">ยังไม่มีบัญชี? สร้างบัญชี</button>
+    </div>
+  </form>
+</main>`;
+}
+
+function bindLogin() {
+  syncTextfields();
+  document.getElementById('login-form').addEventListener('submit', onLoginSubmit);
+  document.getElementById('login-signup').addEventListener('click', () => go('signup'));
+}
+
+function onLoginSubmit(e) {
+  e.preventDefault();
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!username) { setFlash('กรุณากรอกชื่อผู้ใช้'); return; }
+  if (!password) { setFlash('กรุณากรอกรหัสผ่าน'); return; }
+  const account = state.account;
+  if (!account) { setFlash('ยังไม่มีบัญชีในระบบ กด "สร้างบัญชี" เพื่อเริ่มต้น'); return; }
+  if (account.username !== username) { setFlash('ไม่พบบัญชีนี้'); return; }
+  if (hashStr(password) !== account.passwordHash) { setFlash('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'); return; }
+  screen = 'dashboard';
+  saveState();
+  render();
+}
+
+function renderSignupHtml() {
+  return `
+<main class="login-screen">
+  <button class="icon-button" id="signup-back"><span class="material-icons">arrow_back</span></button>
+  <h1 class="t-display-medium">สร้างบัญชี</h1>
+  <p class="login-sub">กรอกข้อมูลเพื่อเริ่มใช้งาน</p>
+  <form id="signup-form" class="login-form">
+    <div class="flash" id="flash" aria-live="polite"></div>
+    <div class="textfield">
+      <input id="signup-username" class="textfield__input" type="text" autocomplete="username" required>
+      <span class="textfield__label">Username</span>
+    </div>
+    <div class="textfield">
+      <input id="signup-name" class="textfield__input" type="text" autocomplete="name" required>
+      <span class="textfield__label">ชื่อ</span>
+    </div>
+    <div class="textfield">
+      <input id="signup-password" class="textfield__input" type="password" autocomplete="new-password" required>
+      <span class="textfield__label">Password</span>
+    </div>
+    <button class="filled-button" type="submit">สร้างบัญชี</button>
+  </form>
+</main>`;
+}
+
+function bindSignup() {
+  syncTextfields();
+  document.getElementById('signup-form').addEventListener('submit', onSignupSubmit);
+  document.getElementById('signup-back').addEventListener('click', () => go('login'));
+}
+
+function onSignupSubmit(e) {
+  e.preventDefault();
+  const username = document.getElementById('signup-username').value.trim();
+  const name = document.getElementById('signup-name').value.trim();
+  const password = document.getElementById('signup-password').value;
+  if (!username) { setFlash('กรุณากรอก Username'); return; }
+  if (!name) { setFlash('กรุณากรอกชื่อ'); return; }
+  if (password.length < 4) { setFlash('รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร'); return; }
+  if (state.account && state.account.username === username) { setFlash('Username นี้ใช้แล้ว'); return; }
+  state.account = { username, name, passwordHash: hashStr(password), profilePic: '' };
+  saveState();
+  screen = 'dashboard';
+  render();
+}
+function navIconHtml(key, icon) {
+  if (key === 'profile') {
+    const avatar = avatarHtml('nav-avatar', 24);
+    if (avatar) return avatar;
+  }
+  return `<span class="material-icons">${icon}</span>`;
+}
+
+let lastNavAvatarHtml = '';
+
+function updateNavAvatar() {
+  const pill = document.querySelector('#main-nav .nav-item[data-nav="profile"] .nav-item__pill');
+  if (!pill) return;
+  const next = navIconHtml('profile', 'account_circle');
+  if (next === lastNavAvatarHtml) return;
+  lastNavAvatarHtml = next;
+  const first = pill.firstElementChild;
+  if (!first) {
+    pill.insertAdjacentHTML('afterbegin', next);
+  } else {
+    first.outerHTML = next;
+  }
+}
+
+function bottomNavHtml() {
+  const items = [
+    ['home', 'home', 'หน้าหลัก'],
+    ['work', 'work', 'ฝากงาน'],
+    ['history', 'history', 'ประวัติ'],
+    ['profile', 'account_circle', 'โปรไฟล์']
+  ];
+  return `
+<nav class="nav-bar" id="main-nav" role="navigation" aria-label="เมนูหลัก">
+  ${items.map(([key, icon, label]) => `
+    <button class="nav-item ${navTab === key ? 'active' : ''}" data-nav="${key}" data-label="${label}" aria-label="${label}" ${navTab === key ? 'aria-current="page"' : ''}>
+      <span class="nav-item__pill">
+        ${navIconHtml(key, icon)}
+        ${navTab === key ? `<span class="nav-item__label t-emph">${label}</span>` : ''}
+      </span>
+    </button>`).join('')}
+</nav>`;
+}
+
+function setNavActive(key) {
+  document.querySelectorAll('#main-nav .nav-item').forEach((btn) => {
+    const active = btn.dataset.nav === key;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-selected', active ? 'true' : 'false');
+    if (active) {
+      btn.setAttribute('aria-current', 'page');
+      if (!btn.querySelector('.nav-item__label')) {
+        const label = document.createElement('span');
+        label.className = 'nav-item__label t-emph';
+        label.textContent = btn.dataset.label;
+        btn.querySelector('.nav-item__pill').appendChild(label);
+      }
+    } else {
+      btn.removeAttribute('aria-current');
+      const label = btn.querySelector('.nav-item__label');
+      if (label) label.remove();
+    }
+  });
+}
+
+function bindBottomNav() {
+  const bar = document.getElementById('main-nav');
+  if (!bar || bar.dataset.bound === '1') return;
+  bar.dataset.bound = '1';
+
+  function navigate(key) {
+    if (key === navTab) return;
+    navTab = key;
+    if (key === 'home') go('home');
+    else if (key === 'work') { currentRoom = null; go('dashboard'); }
+    else if (key === 'history') go('history');
+    else go('profile');
+  }
+
+  let startX = 0;
+  let moved = false;
+  let pointerHandled = false;
+  let dragKey = null;
+
+  function itemAt(x) {
+    return Array.from(bar.querySelectorAll('.nav-item')).find((it) => {
+      const rect = it.getBoundingClientRect();
+      return x >= rect.left && x <= rect.right;
+    });
+  }
+
+  function onMove(e) {
+    if (Math.abs(e.clientX - startX) > 8) moved = true;
+    if (!moved) return;
+    bar.classList.add('is-dragging');
+    const item = itemAt(e.clientX);
+    const key = item ? item.dataset.nav : null;
+    if (key && key !== dragKey) {
+      dragKey = key;
+      setNavActive(key);
+    }
+  }
+
+  function cleanup() {
+    bar.classList.remove('is-dragging');
+    dragKey = null;
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    window.removeEventListener('pointercancel', onCancel);
+  }
+
+  function onUp(e) {
+    cleanup();
+    if (moved) {
+      const item = itemAt(e.clientX);
+      if (item) {
+        pointerHandled = true;
+        navigate(item.dataset.nav);
+      } else {
+        setNavActive(navTab);
+      }
+    }
+  }
+
+  function onCancel() {
+    cleanup();
+    setNavActive(navTab);
+  }
+
+  bar.addEventListener('pointerdown', (e) => {
+    if (!e.target.closest('.nav-item')) return;
+    pointerHandled = false;
+    moved = false;
+    dragKey = navTab;
+    startX = e.clientX;
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onCancel);
+  });
+
+  bar.querySelectorAll('.nav-item').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (pointerHandled) { pointerHandled = false; return; }
+      navigate(btn.dataset.nav);
+    });
+  });
+}
+
+function renderHomeHtml() {
+  const followed = state.followedRooms;
+  const inRooms = [...state.jobs]
+    .filter((j) => followed.some((f) => f.grade === j.grade && f.room === j.room)
+      && (!homeTypeFilter || (j.type || 'work') === homeTypeFilter)
+      && (!homeSubjectFilter || (j.subjectOther || j.subject) === homeSubjectFilter))
+    .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  const liked = [...state.jobs]
+    .filter((j) => j.liked)
+    .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  const chips = followed.map((f) => `<span class="home-chip">${f.grade}/${f.room}</span>`).join('');
+  const typeMenu = `
+<div class="menu" id="home-type-menu" role="menu" hidden>
+  ${[['', 'ทั้งหมด'], ['work', 'ฝากงาน'], ['exam', 'นัดสอบ'], ['answer', 'เฉลยงาน']].map(([key, label]) => `<div class="menu-item" role="menuitem" data-type-filter="${key}">${label}</div>`).join('')}
+</div>`;
+  const subjectMenu = `
+<div class="menu" id="home-subject-menu" role="menu" hidden>
+  ${[['', 'ทุกวิชา'], ...SUBJECTS.map((s) => [s, s])].map(([key, label]) => `<div class="menu-item" role="menuitem" data-subject-filter="${escapeHtml(key)}">${escapeHtml(label)}</div>`).join('')}
+</div>`;
+  return `
+<div class="top-app-bar">
+  <h1 class="top-app-bar__title">หน้าหลัก</h1>
+  <div class="grow"></div>
+  <button type="button" class="filter-chip" id="home-type-chip">${homeTypeFilter ? JOB_TYPES[homeTypeFilter][0] : 'ทั้งหมด'} <span class="material-icons">expand_more</span></button>
+  <button type="button" class="filter-chip" id="home-subject-chip">${homeSubjectFilter || 'วิชา'} <span class="material-icons">expand_more</span></button>
+</div>
+<main class="screen-main screen-main--nav">
+  <div class="home-section-title">ห้องที่ติดตาม</div>
+  <div class="home-chips">${chips || '<p class="empty-text">ยังไม่ได้ติดตามห้อง — กดค้างการ์ดห้องแล้วเลื่อนซ้าย/ขวาในแท็บฝากงาน</p>'}</div>
+  <div class="home-section-title">งานจากห้องที่ติดตาม</div>
+  <div id="home-jobs">${inRooms.length ? inRooms.map((job) => renderJobCardHtml(job)).join('') : '<p class="empty-text">ยังไม่มีงานจากห้องที่ติดตาม</p>'}</div>
+  <div class="home-section-title">งานที่ถูกใจ</div>
+  <div id="liked-jobs">${liked.length ? liked.map((job) => renderJobCardHtml(job)).join('') : '<p class="empty-text">ยังไม่มีงานที่ถูกใจ</p>'}</div>
+</main>
+${typeMenu}
+${subjectMenu}`;
+}
+
+function posterPic(job) {
+  if (job.postedByPic) return job.postedByPic;
+  if (state.account && job.postedBy === state.account.username) return state.account.profilePic || '';
+  return '';
+}
+
+function openPoster(jobId) {
+  const job = state.jobs.find((j) => j.id === jobId);
+  const dlg = document.getElementById('poster-dialog');
+  if (!job || !dlg) return;
+  const avatar = document.getElementById('poster-dlg-avatar');
+  const pic = posterPic(job);
+  avatar.style.backgroundImage = pic ? 'url("' + pic + '")' : '';
+  avatar.style.backgroundSize = 'cover';
+  avatar.style.backgroundPosition = 'center';
+  avatar.style.backgroundRepeat = 'no-repeat';
+  avatar.textContent = pic ? '' : (job.postedByName || job.postedBy || '?').charAt(0);
+  document.getElementById('poster-dlg-name').textContent = job.postedByName || job.postedBy || 'ไม่ระบุ';
+  document.getElementById('poster-dlg-user').textContent = '@' + (job.postedBy || '');
+  dlg.hidden = false;
+}
+
+function bindFilterChips() {
+  [['home-type-chip', 'home-type-menu'], ['home-subject-chip', 'home-subject-menu'],
+   ['dash-type-chip', 'dash-type-menu'], ['dash-subject-chip', 'dash-subject-menu'],
+   ['hist-type-chip', 'hist-type-menu'], ['hist-subject-chip', 'hist-subject-menu']].forEach(([chipId, menuId]) => {
+    const chip = document.getElementById(chipId);
+    if (!chip) return;
+    chip.addEventListener('click', () => {
+      const menu = document.getElementById(menuId);
+      if (!menu.hidden) { menu.hidden = true; return; }
+      openMenu(chip, menu);
+    });
+  });
+  document.querySelectorAll('[data-type-filter]').forEach((opt) => {
+    opt.addEventListener('click', () => { homeTypeFilter = opt.dataset.typeFilter; render({ noAnim: true }); });
+  });
+  document.querySelectorAll('[data-subject-filter]').forEach((opt) => {
+    opt.addEventListener('click', () => { homeSubjectFilter = opt.dataset.subjectFilter; render({ noAnim: true }); });
+  });
+}
+
+function bindHome() {
+  bindFilterChips();
+  document.querySelectorAll('#home-jobs .job-card, #liked-jobs .job-card').forEach((card) => {
+    card.addEventListener('click', () => { detailFrom = 'home'; go('jobDetail', card.dataset.jobId); });
+    const like = card.querySelector('.job-like');
+    if (like) like.addEventListener('click', (e) => { e.stopPropagation(); toggleLike(card.dataset.jobId); });
+    const poster = card.querySelector('.poster-chip');
+    if (poster) poster.addEventListener('click', (e) => { e.stopPropagation(); openPoster(poster.dataset.posterJob); });
+  });
+  bindBottomNav();
+}
+
+function renderHistoryHtml() {
+  const jobs = [...state.jobs]
+    .filter((j) => (!homeTypeFilter || (j.type || 'work') === homeTypeFilter)
+      && (!homeSubjectFilter || (j.subjectOther || j.subject) === homeSubjectFilter))
+    .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  const list = jobs.length
+    ? jobs.map((job) => renderJobCardHtml(job)).join('')
+    : '<p class="empty-text">ยังไม่มีประวัติงาน</p>';
+  const filterMenus = `
+<div class="menu" id="hist-type-menu" role="menu" hidden>
+  ${[['', 'ทั้งหมด'], ['work', 'ฝากงาน'], ['exam', 'นัดสอบ'], ['answer', 'เฉลยงาน']].map(([key, label]) => `<div class="menu-item" role="menuitem" data-type-filter="${key}">${label}</div>`).join('')}
+</div>
+<div class="menu" id="hist-subject-menu" role="menu" hidden>
+  ${[['', 'ทุกวิชา'], ...SUBJECTS.map((s) => [s, s])].map(([key, label]) => `<div class="menu-item" role="menuitem" data-subject-filter="${escapeHtml(key)}">${escapeHtml(label)}</div>`).join('')}
+</div>`;
+  return `
+<div class="top-app-bar">
+  <h1 class="top-app-bar__title">ประวัติ</h1>
+  <div class="grow"></div>
+  <button type="button" class="filter-chip" id="hist-type-chip">${homeTypeFilter ? JOB_TYPES[homeTypeFilter][0] : 'ทั้งหมด'} <span class="material-icons">expand_more</span></button>
+  <button type="button" class="filter-chip" id="hist-subject-chip">${homeSubjectFilter || 'วิชา'} <span class="material-icons">expand_more</span></button>
+</div>
+<main class="screen-main screen-main--nav">
+  <div id="history-list">${list}</div>
+</main>
+${filterMenus}`;
+}
+
+function bindHistory() {
+  document.querySelectorAll('#history-list .job-card').forEach((card) => {
+    card.addEventListener('click', () => { detailFrom = 'history'; go('jobDetail', card.dataset.jobId); });
+    const like = card.querySelector('.job-like');
+    if (like) like.addEventListener('click', (e) => { e.stopPropagation(); toggleLike(card.dataset.jobId); });
+    const poster = card.querySelector('.poster-chip');
+    if (poster) poster.addEventListener('click', (e) => { e.stopPropagation(); openPoster(poster.dataset.posterJob); });
+  });
+  bindFilterChips();
+  bindBottomNav();
+}
+
+function renderDashboardHtml() {
+  const gradeNum = selectedGrade.replace('M.', '');
+  const typeLabel = homeTypeFilter ? JOB_TYPES[homeTypeFilter][0] : 'ทั้งหมด';
+  const subjectLabel = homeSubjectFilter || 'วิชา';
+  const filterMenus = `
+<div class="menu" id="dash-type-menu" role="menu" hidden>
+  ${[['', 'ทั้งหมด'], ['work', 'ฝากงาน'], ['exam', 'นัดสอบ'], ['answer', 'เฉลยงาน']].map(([key, label]) => `<div class="menu-item" role="menuitem" data-type-filter="${key}">${label}</div>`).join('')}
+</div>
+<div class="menu" id="dash-subject-menu" role="menu" hidden>
+  ${[['', 'ทุกวิชา'], ...SUBJECTS.map((s) => [s, s])].map(([key, label]) => `<div class="menu-item" role="menuitem" data-subject-filter="${escapeHtml(key)}">${escapeHtml(label)}</div>`).join('')}
+</div>`;
+  const header = `
+<div class="top-app-bar">
+  <h1 class="top-app-bar__title">ฝากงาน</h1>
+  <div class="grow"></div>
+  <button type="button" class="filter-chip" id="dash-type-chip">${typeLabel} <span class="material-icons">expand_more</span></button>
+  <button type="button" class="filter-chip" id="dash-subject-chip">${subjectLabel} <span class="material-icons">expand_more</span></button>
+  <button class="icon-button" id="dash-avatar" aria-label="โปรไฟล์">${avatarHtml('top-avatar', 40)}</button>
+</div>
+<div class="dash-subbar">
+  <button class="grade-chip" id="grade-chip" aria-haspopup="menu">${selectedGrade} <span class="material-icons">expand_more</span></button>
+  ${currentRoom ? '<button class="icon-button" id="room-back" aria-label="ย้อนกลับ"><span class="material-icons">arrow_back</span></button>' : ''}
+</div>`;
+  const gradeMenu = `
+<div class="menu" id="grade-menu" role="menu" hidden>
+  ${GRADES.map((g) => `<div class="menu-item grade-option" role="menuitem" data-grade="${g}">${g}</div>`).join('')}
+</div>`;
+  const fab = `
+<div class="fab-menu" id="fab-menu" hidden>
+  <button type="button" class="fab-menu-item" data-fab-action="exam" style="background: var(--md-sys-color-tertiary); color: var(--md-sys-color-on-tertiary);">นัดสอบ</button>
+  <button type="button" class="fab-menu-item" data-fab-action="answer" style="background: var(--md-sys-color-secondary); color: var(--md-sys-color-on-secondary);">เฉลยงาน</button>
+  <button type="button" class="fab-menu-item" data-fab-action="work" style="background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);">ฝากงาน</button>
+</div>
+<button class="fab m3y-squircle ${fabOpen ? 'is-open' : ''}" id="add-job-btn" aria-label="${fabOpen ? 'ปิดเมนู' : 'เพิ่มงาน'}"><span class="material-icons">${fabOpen ? 'close' : 'add'}</span></button>`;
+  if (currentRoom) {
+    const jobs = [...state.jobs]
+      .filter((j) => !j.grade || (j.grade === selectedGrade && j.room === currentRoom))
+      .filter((j) => (!homeTypeFilter || (j.type || 'work') === homeTypeFilter)
+        && (!homeSubjectFilter || (j.subjectOther || j.subject) === homeSubjectFilter))
+      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+    const list = jobs.length
+      ? jobs.map((job) => renderJobCardHtml(job)).join('')
+      : '<p class="empty-text">ยังไม่มีงานในห้องนี้<br>กดปุ่ม + เพื่อเพิ่มงาน</p>';
+    return `${header}
+<main class="screen-main screen-main--nav">
+  <div class="room-title">${selectedGrade} / ห้อง ${currentRoom}</div>
+  <div id="jobs-list">${list}</div>
+</main>
+${fab}
+${gradeMenu}
+${filterMenus}
+`;
+  }
+  const rooms = roomsForGrade(selectedGrade);
+  const grid = rooms.map((r, i) => `
+    <button class="room-card shape-${i % 13}" data-room="${escapeHtml(r)}" aria-label="${selectedGrade} ห้อง ${r}">
+      <span class="room-blob room-blob--a" aria-hidden="true"></span>
+      <span class="room-blob room-blob--b" aria-hidden="true"></span>
+      <span class="room-swipe-bg" aria-hidden="true"><span class="material-icons">bookmark_add</span>ปัดเพื่อติดตาม</span>
+      <span class="room-card__label">${gradeNum}/${r}</span>
+      ${isFollowed(selectedGrade, r) ? '<span class="room-follow" aria-hidden="true"><span class="material-icons">bookmark</span></span>' : ''}
+    </button>`).join('');
+  return `${header}
+<main class="screen-main screen-main--nav">
+  <div class="room-hint">กดค้างการ์ดห้องแล้วเลื่อนซ้าย/ขวาเพื่อติดตามห้อง</div>
+  <div class="room-grid">${grid}</div>
+</main>
+${gradeMenu}
+${filterMenus}
+`;
+}
+
+function renderJobCardHtml(job) {
+  const status = statusOf(job);
+  const subject = job.subjectOther || job.subject;
+  const postedBy = (state.account && job.postedByName) || job.postedBy || '';
+  return `
+<article class="job-card" data-job-id="${escapeHtml(job.id)}">
+  <button type="button" class="job-like ${job.liked ? 'is-liked' : ''}" data-like="${escapeHtml(job.id)}" aria-label="${job.liked ? 'เลิกถูกใจ' : 'ถูกใจ'}" style="${job.liked ? 'color: var(--md-sys-color-error);' : ''}"><span class="material-icons">favorite</span></button>
+  <div class="job-card__top">
+    <span class="job-card__subject t-label-large">${job.type === 'exam' ? 'นัดสอบ · ' : job.type === 'answer' ? 'เฉลย · ' : ''}${escapeHtml(subject)}</span>
+    <span class="job-card__room t-body-small">${job.grade ? `ม.${job.grade} ห้อง ${job.room}` : 'ไม่ระบุห้อง'}</span>
+  </div>
+  <h3 class="job-card__title t-headline-small t-emph">${escapeHtml(job.title)}</h3>
+  <div class="job-card__meta t-body-small">
+    <button type="button" class="poster-chip" data-poster-job="${escapeHtml(job.id)}" aria-label="ดูโปรไฟล์ผู้โพสต์">
+      ${posterPic(job) ? `<span class="poster-avatar" style="background-image: url(&quot;${escapeHtml(posterPic(job))}&quot;);"></span>` : '<span class="material-icons">account_circle</span>'}
+      ${escapeHtml(postedBy)}
+    </button>
+    · ${fmtDateTime(job.createdAt)}
+  </div>
+  <div class="job-card__status t-body-small status--${status.tone}">${status.text}${job.dueDate ? ` · วันที่ส่ง: ${fmtDate(job.dueDate)}` : ''}</div>
+</article>`;
+}
+
+function renderJobDetailHtml(job) {
+  const status = statusOf(job);
+  const postedBy = (state.account && job.postedByName) || job.postedBy || '';
+  const isImage = (f) => (f.type || '').startsWith('image/') || /\.(png|jpe?g|gif|webp|avif)$/i.test(f.name || '');
+  const images = job.files.filter(isImage);
+  const imagesHtml = images.map((f) => `
+    <figure class="job-image"><img src="${escapeHtml(f.dataUrl)}" alt="${escapeHtml(f.name)}" loading="lazy"><figcaption>${escapeHtml(f.name)}</figcaption></figure>`).join('');
+  const filesHtml = job.files.filter((f) => !isImage(f)).map((f) => `
+<li class="file-row"><a class="file-row__link" href="${escapeHtml(f.dataUrl)}" download="${escapeHtml(f.name)}">${escapeHtml(f.name)}</a></li>`).join('');
+  const linksHtml = job.links.map((l) => `
+<li class="link-list-ul__item"><a class="link-row__link" href="${escapeHtml(l.url)}" target="_blank" rel="noreferrer"><span class="material-icons">link</span>${escapeHtml(l.url)}</a></li>`).join('');
+  const comments = job.comments || [];
+  const commentsHtml = comments.map((c) => `
+    <div class="comment-item">
+      <div class="comment-avatar">${escapeHtml((c.author || '?').charAt(0))}</div>
+      <div class="comment-body">
+        <div class="comment-meta">${escapeHtml(c.author)} · ${fmtDateTime(c.createdAt)}</div>
+        <div class="comment-text">${escapeHtml(c.text)}</div>
+      </div>
+    </div>`).join('');
+  const icon = status.tone === 'error' ? 'error_outline' : 'check_circle';
+  return `
+<div class="top-app-bar top-app-bar--detail">
+  <button class="icon-button" id="detail-back"><span class="material-icons">arrow_back</span></button>
+  <div class="grow"></div>
+  <h1 class="detail-title">${escapeHtml(job.title)}</h1>
+</div>
+<main class="screen-main detail-main">
+  <div class="detail-meta">
+    <div class="detail-meta-row"><span class="material-icons">assignment_ind</span>วิชา: ${escapeHtml(job.subject)}</div>
+    <div class="detail-meta-row"><span class="material-icons">domain</span>${job.grade ? `ม.${job.grade} ห้อง ${job.room}` : 'ไม่ระบุระดับ/ห้อง'}</div>
+    <div class="detail-meta-row"><span class="material-icons">person</span>โพสต์โดย: ${escapeHtml(postedBy)} · ${fmtDateTime(job.createdAt)}</div>
+    <div class="detail-meta-row detail-meta-row--${status.tone}"><span class="material-icons">${icon}</span>สถานะ: ${status.text}${job.dueDate ? ` · วันที่ส่ง: ${fmtDate(job.dueDate)}` : ''}</div>
+  </div>
+  <button type="button" class="poster-chip" id="poster-detail" style="align-self: flex-start; margin-bottom: 4px;">
+    ${posterPic(job) ? `<span class="poster-avatar" style="background-image: url(&quot;${escapeHtml(posterPic(job))}&quot;);"></span>` : '<span class="material-icons">account_circle</span>'}
+    โพสต์โดย ${escapeHtml(postedBy)}
+  </button>
+  <button type="button" class="filled-tonal-button job-like-detail ${job.liked ? 'is-liked' : ''}" id="job-like-btn" data-like="${escapeHtml(job.id)}" style="${job.liked ? 'background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container);' : ''}"><span class="material-icons">favorite</span>${job.liked ? 'เลิกถูกใจ' : 'ถูกใจ / บันทึก'}</button>
+  <button type="button" class="filled-tonal-button job-delete" id="job-delete" style="background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container);"><span class="material-icons">delete</span>ลบงาน</button>
+  <section class="card"><h2 class="card-heading t-title-large">งาน / เนื้อหางาน</h2><div class="card-body t-body-medium">${escapeHtml(job.content)}</div></section>
+  ${job.answer ? `<section class="card"><h2 class="card-heading t-title-large">เฉลย / เกรงคำตอบ</h2><div class="card-body t-body-medium">${escapeHtml(job.answer)}</div></section>` : ''}
+  ${images.length ? `<section class="card"><h2 class="card-heading t-title-large">รูปภาพ</h2><div class="job-gallery">${imagesHtml}</div></section>` : ''}
+  ${filesHtml ? `<section class="card"><h2 class="card-heading t-title-large">ไฟล์ประกอบ</h2><ul class="file-list-ul">${filesHtml}</ul></section>` : ''}
+  ${job.links.length ? `<section class="card"><h2 class="card-heading t-title-large">ลิ้งค์ต่างๆ</h2><ul class="link-list-ul">${linksHtml}</ul></section>` : ''}
+  <section class="card">
+    <h2 class="card-heading t-title-large">ความเห็น (${comments.length})</h2>
+    <div class="comment-list">${commentsHtml || '<p class="empty-text">ยังไม่มีความเห็น</p>'}</div>
+    <div class="comment-compose">
+      <input id="comment-input" class="textfield__input" type="text" placeholder="เขียนความเห็น...">
+      <button type="button" class="icon-button" id="comment-send" aria-label="ส่งความเห็น"><span class="material-icons">send</span></button>
+    </div>
+  </section>
+  <div class="flash" id="flash" aria-live="polite"></div>
+</main>`;
+}
+
+function bindDashboard() {
+  document.getElementById('dash-avatar').addEventListener('click', () => { navTab = 'profile'; go('profile'); });
+  const fabBtn = document.getElementById('add-job-btn');
+  if (fabBtn) {
+    fabBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      fabOpen = !fabOpen;
+      const menu = document.getElementById('fab-menu');
+      if (menu) menu.hidden = !fabOpen;
+      fabBtn.classList.toggle('is-open', fabOpen);
+      fabBtn.setAttribute('aria-label', fabOpen ? 'ปิดเมนู' : 'เพิ่มงาน');
+      fabBtn.querySelector('.material-icons').textContent = fabOpen ? 'close' : 'add';
+    });
+    document.querySelectorAll('[data-fab-action]').forEach((action) => {
+      action.addEventListener('click', (e) => {
+        e.stopPropagation();
+        fabOpen = false;
+        newJobType = action.dataset.fabAction || 'work';
+        go('addJob');
+      });
+    });
+  } else {
+    fabOpen = false;
+  }
+
+  const gradeChip = document.getElementById('grade-chip');
+  gradeChip.addEventListener('click', () => {
+    const menu = document.getElementById('grade-menu');
+    if (!menu.hidden) { menu.hidden = true; return; }
+    openMenu(gradeChip, menu);
+  });
+  document.querySelectorAll('#grade-menu .grade-option').forEach((opt) => {
+    opt.addEventListener('click', () => {
+      selectedGrade = opt.dataset.grade;
+      currentRoom = null;
+      document.getElementById('grade-menu').hidden = true;
+      render();
+    });
+  });
+
+  document.querySelectorAll('.room-card').forEach((card) => {
+    let startX = 0;
+    let startY = 0;
+    let swiped = false;
+    let activePointer = null;
+
+    card.addEventListener('pointerdown', (e) => {
+      activePointer = e.pointerId;
+      startX = e.clientX;
+      startY = e.clientY;
+      swiped = false;
+    });
+
+    card.addEventListener('pointermove', (e) => {
+      if (activePointer !== e.pointerId) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) {
+        card.classList.add('is-swiping');
+        card.classList.toggle('swipe-left', dx < 0);
+        const tx = Math.max(-120, Math.min(120, dx));
+        card.style.transform = 'translateX(' + tx + 'px) rotate(' + (tx * 0.04) + 'deg) scale(0.98)';
+        card.style.opacity = String(Math.max(0.55, 1 - Math.abs(dx) / 300));
+      }
+    });
+
+    function endSwipe(e) {
+      if (activePointer !== e.pointerId) return;
+      activePointer = null;
+      card.classList.remove('is-swiping', 'swipe-left');
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      const canceledWithNoCoords = e.type === 'pointercancel' && !e.clientX && !e.clientY;
+      if (!canceledWithNoCoords && Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+        swiped = true;
+        const dir = dx > 0 ? 1 : -1;
+        const grade = selectedGrade;
+        const room = card.dataset.room;
+        card.classList.add('is-leaving');
+        card.style.transform = 'translateX(' + (dir * 70) + '%) rotate(' + (dir * 8) + 'deg)';
+        card.style.opacity = '0';
+        window.setTimeout(() => toggleFollow(grade, room), 260);
+      } else {
+        card.style.transform = '';
+        card.style.opacity = '';
+      }
+    }
+
+    card.addEventListener('pointerup', endSwipe);
+    card.addEventListener('pointercancel', endSwipe);
+    card.addEventListener('click', () => {
+      if (swiped) { swiped = false; return; }
+      currentRoom = card.dataset.room;
+      render();
+    });
+  });
+
+  const roomBack = document.getElementById('room-back');
+  if (roomBack) roomBack.addEventListener('click', () => { currentRoom = null; render(); });
+
+  document.querySelectorAll('#jobs-list .job-card').forEach((card) => {
+    card.addEventListener('click', () => { detailFrom = 'dashboard'; go('jobDetail', card.dataset.jobId); });
+    const like = card.querySelector('.job-like');
+    if (like) like.addEventListener('click', (e) => { e.stopPropagation(); toggleLike(card.dataset.jobId); });
+    const poster = card.querySelector('.poster-chip');
+    if (poster) poster.addEventListener('click', (e) => { e.stopPropagation(); openPoster(poster.dataset.posterJob); });
+  });
+
+  bindFilterChips();
+  bindBottomNav();
+}
+
+function openMenu(anchor, menuEl) {
+  menuEl.dataset.anchor = anchor.id;
+  menuEl.hidden = false;
+  const rect = anchor.getBoundingClientRect();
+  const width = menuEl.offsetWidth || 200;
+  const left = Math.min(rect.right - 8 - width, window.innerWidth - 16 - width);
+  menuEl.style.left = Math.max(8, left) + 'px';
+  menuEl.style.top = rect.bottom + 8 + 'px';
+}
+
+function bindJobDetail() {
+  document.getElementById('detail-back').addEventListener('click', () => {
+    if (detailFrom === 'home') { navTab = 'home'; go('home'); }
+    else if (detailFrom === 'history') { navTab = 'history'; go('history'); }
+    else { navTab = 'work'; go('dashboard'); }
+  });
+  const likeBtn = document.getElementById('job-like-btn');
+  if (likeBtn) likeBtn.addEventListener('click', () => toggleLike(selectedJobId));
+  const posterDetail = document.getElementById('poster-detail');
+  if (posterDetail) posterDetail.addEventListener('click', () => openPoster(selectedJobId));
+
+  const commentInput = document.getElementById('comment-input');
+  const commentSend = document.getElementById('comment-send');
+  function sendComment() {
+    if (!commentInput) return;
+    const text = commentInput.value.trim();
+    if (!text) { setFlash('กรุณาเขียนความเห็น'); return; }
+    const job = state.jobs.find((j) => j.id === selectedJobId);
+    if (!job) return;
+    if (!Array.isArray(job.comments)) job.comments = [];
+    job.comments.push({
+      id: 'c-' + Date.now().toString(36),
+      author: state.account ? (state.account.name || state.account.username) : 'guest',
+      text,
+      createdAt: new Date().toISOString()
+    });
+    saveState();
+    render({ noAnim: true });
+  }
+  if (commentSend) commentSend.addEventListener('click', sendComment);
+  if (commentInput) commentInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendComment(); });
+  const del = document.getElementById('job-delete');
+  if (del) del.addEventListener('click', () => {
+    if (!window.confirm('ลบงานนี้หรือไม่?')) return;
+    state.jobs = state.jobs.filter((job) => job.id !== selectedJobId);
+    saveState();
+    if (detailFrom === 'home') { navTab = 'home'; go('home'); }
+    else if (detailFrom === 'history') { navTab = 'history'; go('history'); }
+    else { navTab = 'work'; go('dashboard'); }
+  });
+}
+function renderAddJobHtml() {
+  const isExam = newJobType === 'exam';
+  return `
+<div class="top-app-bar">
+  <button class="icon-button" id="add-back"><span class="material-icons">arrow_back</span></button>
+  <div class="grow"></div>
+  <h1 class="top-app-bar__title">${JOB_TYPES[newJobType][0]}</h1>
+  <div class="grow"></div>
+</div>
+<div class="add-header">
+  <span class="material-icons">${JOB_TYPES[newJobType][1]}</span>
+  <div>
+    <h2 class="t-headline-large t-emph">${JOB_TYPES[newJobType][0]}</h2>
+    <p class="add-sub">กรอกข้อมูลได้ตามสะดวก ไม่บังคับทุกช่อง</p>
+  </div>
+</div>
+<main class="screen-main">
+  <div class="flash" id="flash" aria-live="polite"></div>
+  <form id="add-job-form" class="job-form">
+    <section class="form-section">
+      ${isExam ? '' : `
+      <div class="textfield">
+        <input id="job-title" class="textfield__input" type="text" autocomplete="off">
+        <span class="textfield__label">ชื่องาน / หัวข้องาน</span>
+      </div>`}
+      <div class="form-row form-row--two">
+        <div class="textfield">
+          <select id="job-subject" class="textfield__input">
+            <option value="" disabled selected>เลือกวิชา</option>
+            ${SUBJECTS.map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('')}
+            <option value="other">อื่นๆ</option>
+          </select>
+          <span class="textfield__label">วิชา</span>
+        </div>
+        <div class="textfield" id="job-subject-other-wrap" hidden>
+          <input id="job-subject-other" class="textfield__input" type="text">
+          <span class="textfield__label">ระบุวิชา</span>
+        </div>
+      </div>
+      ${isExam ? '' : `
+      <div class="form-row form-row--two">
+        <div class="textfield">
+          <select id="job-grade" class="textfield__input">
+            <option value="" disabled selected>เลือกระดับ</option>
+            ${GRADES.map((g) => `<option value="${g}">${g}</option>`).join('')}
+          </select>
+          <span class="textfield__label">ระดับ</span>
+        </div>
+        <div class="textfield">
+          <select id="job-room" class="textfield__input" disabled>
+            <option value="" disabled selected>เลือกห้อง</option>
+            ${roomsForGrade('M.1').map((r) => `<option value="${r}">ห้อง ${r}</option>`).join('')}
+          </select>
+          <span class="textfield__label">ห้อง</span>
+        </div>
+      </div>`}
+      <div class="textfield">
+        <textarea id="job-content" class="textfield__input" rows="5"></textarea>
+        <span class="textfield__label">${isExam ? 'เนื้อหาที่จะสอบ' : 'งาน / เนื้อหางาน'}</span>
+      </div>
+      ${isExam ? '' : `
+      <div class="textfield">
+        <textarea id="job-answer" class="textfield__input" rows="3"></textarea>
+        <span class="textfield__label">เฉลย / เกรงคำตอบ</span>
+      </div>`}
+      <div class="textfield">
+        <input id="job-due" class="textfield__input" type="date">
+        <span class="textfield__label">${isExam ? 'วันสอบ' : 'วันที่ส่ง'}</span>
+      </div>
+    </section>
+    <section class="form-section">
+      <div class="form-section__title">
+        <span class="t-title-medium">${isExam ? 'แนวข้อสอบ (ไฟล์, รูป)' : 'รูปภาพและไฟล์แนบ'}</span>
+        <div class="form-section__actions">
+          <button type="button" class="filled-tonal-button" id="job-add-images"><span class="material-icons">image</span>เพิ่มรูป</button>
+          <button type="button" class="filled-tonal-button" id="job-add-files"><span class="material-icons">attach_file</span>เลือกไฟล์</button>
+        </div>
+      </div>
+      <div id="job-files-list" class="file-list-ul"></div>
+      <input type="file" id="job-images-input" class="sr-only" multiple accept="image/*">
+      <input type="file" id="job-files-input" class="sr-only" multiple accept="*">
+    </section>
+    <section class="form-section">
+      <div class="form-section__title">
+        <span class="t-title-medium">ลิ้งค์</span>
+        <button type="button" class="filled-tonal-button" id="job-add-link"><span class="material-icons">link</span>เพิ่มลิ้งค์</button>
+      </div>
+      <div id="job-links-list" class="link-list-ul"></div>
+    </section>
+    <button class="filled-button" id="job-submit" type="submit"><span class="material-icons">check</span>บันทึก${JOB_TYPES[newJobType][0]}</button>
+  </form>
+</main>`;
+}
+
+function bindAddJob() {
+  syncTextfields();
+  const subjectSel = document.getElementById('job-subject');
+  const otherWrap = document.getElementById('job-subject-other-wrap');
+  const otherInput = document.getElementById('job-subject-other');
+  const gradeSel = document.getElementById('job-grade');
+  const roomSel = document.getElementById('job-room');
+
+  if (gradeSel && roomSel) {
+    gradeSel.value = selectedGrade;
+    roomSel.disabled = false;
+    roomSel.innerHTML = '<option value="" disabled>เลือกห้อง</option>' +
+      roomsForGrade(selectedGrade).map((r) => `<option value="${r}">ห้อง ${r}</option>`).join('');
+    roomSel.value = currentRoom || roomsForGrade(selectedGrade)[0];
+    syncTextfield(roomSel);
+  }
+
+  function syncSubjectWrap() {
+    const show = subjectSel.value === 'other';
+    otherWrap.hidden = !show;
+    otherInput.required = false;
+    if (show) syncTextfield(otherInput);
+  }
+  syncSubjectWrap();
+  subjectSel.addEventListener('change', syncSubjectWrap);
+
+  if (gradeSel && roomSel) {
+    gradeSel.addEventListener('change', () => {
+      const rooms = roomsForGrade(gradeSel.value);
+      roomSel.innerHTML = '<option value="" disabled selected>เลือกห้อง</option>' + rooms.map((r) => `<option value="${r}">ห้อง ${r}</option>`).join('');
+      roomSel.disabled = !gradeSel.value;
+      if (gradeSel.value) roomSel.value = rooms[0];
+    });
+  }
+
+  function addPickedFiles(ev) {
+    const files = Array.from(ev.target.files || []);
+    ev.target.value = '';
+    if (!files.length) return;
+    const list = document.getElementById('job-files-list');
+    files.forEach((file) => {
+      fileToDataUrl(file).then((dataUrl) => {
+        if (!dataUrl) return;
+        const row = document.createElement('div');
+        row.className = 'file-row';
+        const isImage = (file.type || '').startsWith('image/');
+        const thumb = isImage ? `<img class="file-thumb" src="${escapeHtml(dataUrl)}" alt="">` : '';
+        row.innerHTML = `<a class="file-row__link" href="${escapeHtml(dataUrl)}" download="${escapeHtml(file.name)}" data-type="${escapeHtml(file.type || '')}">${thumb}${escapeHtml(file.name)}</a>`;
+        const remove = document.createElement('button');
+        remove.className = 'icon-button file-row__remove';
+        remove.setAttribute('aria-label', 'เอาไฟล์ออก');
+        remove.innerHTML = '<span class="material-icons">close</span>';
+        remove.addEventListener('click', () => row.remove());
+        row.appendChild(remove);
+        list.appendChild(row);
+      });
+    });
+  }
+
+  document.getElementById('job-add-files').addEventListener('click', () => document.getElementById('job-files-input').click());
+  document.getElementById('job-files-input').addEventListener('change', addPickedFiles);
+  document.getElementById('job-add-images').addEventListener('click', () => document.getElementById('job-images-input').click());
+  document.getElementById('job-images-input').addEventListener('change', addPickedFiles);
+
+  document.getElementById('job-add-link').addEventListener('click', () => {
+    const list = document.getElementById('job-links-list');
+    const row = document.createElement('div');
+    row.className = 'link-row';
+    const input = document.createElement('input');
+    input.className = 'link-input';
+    input.type = 'text';
+    input.placeholder = 'ลิ้งค์ (เช่น https://example.com)';
+    row.appendChild(input);
+    const remove = document.createElement('button');
+    remove.className = 'icon-button';
+    remove.setAttribute('aria-label', 'เอาลิ้งค์ออก');
+    remove.innerHTML = '<span class="material-icons">close</span>';
+    remove.addEventListener('click', () => row.remove());
+    row.appendChild(remove);
+    list.appendChild(row);
+  });
+
+  document.getElementById('add-job-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const titleEl = document.getElementById('job-title');
+    const title = titleEl ? titleEl.value.trim() : '';
+    const subject = subjectSel.value === 'other' ? otherInput.value.trim() : subjectSel.value;
+    const grade = gradeSel ? gradeSel.value : selectedGrade;
+    const room = roomSel ? roomSel.value : currentRoom;
+    const content = document.getElementById('job-content').value.trim();
+    const answerEl = document.getElementById('job-answer');
+    const answer = answerEl ? answerEl.value.trim() : '';
+    const due = document.getElementById('job-due').value;
+    const files = Array.from(document.querySelectorAll('#job-files-list .file-row__link')).map((a) => ({
+      name: a.textContent.trim(),
+      dataUrl: a.getAttribute('href') || '',
+      type: a.getAttribute('data-type') || ''
+    })).filter((f) => f.dataUrl);
+    const links = Array.from(document.querySelectorAll('#job-links-list .link-input')).map((i) => ({ url: i.value.trim() })).filter((l) => l.url);
+    const job = {
+      id: 'job-' + Date.now().toString(36),
+      type: newJobType,
+      title: title || (newJobType === 'exam' ? 'นัดสอบ' : 'งานไม่มีชื่อ'),
+      subject: subject || 'ไม่ระบุวิชา',
+      subjectOther: subjectSel.value === 'other' ? subject : '',
+      grade: grade || '',
+      room: room || '',
+      content: content || '',
+      answer,
+      dueDate: due,
+      files,
+      links,
+      postedBy: state.account.username,
+      postedByName: state.account.name || state.account.username,
+      postedByPic: state.account.profilePic || '',
+      createdAt: new Date().toISOString()
+    };
+    state.jobs.push(job);
+    saveState();
+    selectedGrade = grade || 'M.1';
+    currentRoom = room || null;
+    navTab = 'work';
+    go('dashboard');
+  });
+
+  document.getElementById('add-back').addEventListener('click', () => go('dashboard'));
+}
+
+function renderProfileHtml() {
+  const account = state.account;
+  const name = account.name || account.username;
+  return `
+<div class="profile-page screen-main--nav">
+  <div class="profile-banner ${account.profileBanner ? 'has-image' : ''}" style="${account.profileBanner ? `background-image: url(&quot;${escapeHtml(account.profileBanner)}&quot;); background-size: cover; background-position: center;` : ''}">
+    <span class="banner-blob banner-blob--a" aria-hidden="true"></span>
+    <span class="banner-blob banner-blob--b" aria-hidden="true"></span>
+    <span class="banner-blob banner-blob--c" aria-hidden="true"></span>
+    <button type="button" class="banner-edit" id="banner-edit" aria-label="เปลี่ยนรูปแบนเนอร์"><span class="material-icons">photo_camera</span></button>
+    <header class="profile-header">
+      <button type="button" class="profile-avatar-btn" id="profile-avatar-btn" aria-label="เปลี่ยนรูปโปรไฟล์">${avatarHtml('profile-avatar', 96)}</button>
+      <div class="profile-ident">
+        <div class="profile-ident__name">${escapeHtml(name)}</div>
+        <div class="profile-ident__user">${escapeHtml(account.username)}</div>
+      </div>
+    </header>
+  </div>
+  <input type="file" id="banner-input" class="sr-only" accept="image/*">
+  <input type="file" id="profile-pic-input" class="sr-only" accept="image/*">
+
+  <section class="profile-section">
+    <div class="profile-section__label">ชื่อ</div>
+    <div class="profile-section__body">
+      <div class="textfield">
+        <input id="profile-name-input" class="textfield__input" type="text" value="${escapeHtml(name)}">
+      </div>
+      <button type="button" class="filled-tonal-button profile-small-btn" id="profile-name-save"><span class="material-icons">check</span>บันทึก</button>
+    </div>
+  </section>
+
+  <section class="profile-section">
+    <div class="profile-section__label">รหัสผ่าน</div>
+    <div class="profile-section__body profile-section__body--stack">
+      <div class="textfield">
+        <input id="profile-pw-current" class="textfield__input" type="password" autocomplete="current-password">
+        <span class="textfield__label">รหัสผ่านปัจจุบัน</span>
+      </div>
+      <div class="textfield">
+        <input id="profile-pw-new" class="textfield__input" type="password" autocomplete="new-password">
+        <span class="textfield__label">รหัสผ่านใหม่</span>
+      </div>
+      <div class="textfield">
+        <input id="profile-pw-confirm" class="textfield__input" type="password" autocomplete="new-password">
+        <span class="textfield__label">ยืนยันรหัสผ่านใหม่</span>
+      </div>
+      <button type="button" class="filled-tonal-button profile-small-btn profile-small-btn--end" id="profile-pw-save"><span class="material-icons">check</span>บันทึก</button>
+    </div>
+  </section>
+
+  <section class="profile-section">
+    <div class="profile-section__label">ตั้งค่าสี</div>
+    <div class="color-options">
+      ${COLOR_SCHEMES.map(([key, color, label]) => `
+        <button type="button" class="color-swatch ${colorScheme === key ? 'selected' : ''}" data-color-name="${key}" aria-label="สี${label}" style="background: ${color};">
+          ${colorScheme === key ? '<span class="material-icons">check</span>' : ''}
+        </button>`).join('')}
+    </div>
+    <div class="color-options" style="margin-top: 12px;">
+      ${[['light', 'สว่าง', 'light_mode'], ['dark', 'มืด', 'dark_mode']].map(([key, label, icon]) => `
+        <button type="button" class="filled-tonal-button mode-option ${colorMode === key ? 'selected' : ''}" data-mode-name="${key}" aria-label="โหมด${label}">
+          <span class="material-icons">${icon}</span>${label}
+        </button>`).join('')}
+    </div>
+  </section>
+
+  <section class="profile-section">
+    <div class="profile-section__label">อัปเดต / Changelog</div>
+    <div class="changelog-row">
+      <span class="material-icons">campaign</span>
+      <div>
+        <div class="changelog-title">Chat update coming soon💔✌️</div>
+        <div class="changelog-sub">ติดตามข่าวสารและฟีเจอร์ใหม่ ๆ ของแอปได้ที่นี่</div>
+      </div>
+    </div>
+  </section>
+
+  <button type="button" class="filled-button profile-logout" id="profile-logout" style="background: var(--md-sys-color-error); color: var(--md-sys-color-on-error);"><span class="material-icons">logout</span>ออกจากระบบ</button>
+  <div class="flash" id="flash" aria-live="polite"></div>
+</div>
+`;
+}
+
+function updateBannerContrast() {
+  const banner = document.querySelector('.profile-banner');
+  if (!banner) return;
+  const src = state.account && state.account.profileBanner;
+  if (!src) {
+    banner.classList.remove('banner-light', 'banner-dark');
+    return;
+  }
+  const img = new Image();
+  img.onload = () => {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 16;
+      canvas.height = 16;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, 16, 16);
+      const data = ctx.getImageData(0, 0, 16, 16).data;
+      let sum = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        sum += 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+      }
+      const light = sum / (data.length / 4) > 140;
+      banner.classList.toggle('banner-light', light);
+      banner.classList.toggle('banner-dark', !light);
+    } catch (e) {
+      banner.classList.add('banner-dark');
+    }
+  };
+  img.onerror = () => banner.classList.add('banner-dark');
+  img.src = src;
+}
+
+function updateProfileCollapse() {
+  const app = document.getElementById('app');
+  const banner = document.querySelector('.profile-banner');
+  if (!app || !banner) return;
+  const p = Math.max(0, Math.min(1, app.scrollTop / 90));
+  banner.style.height = (128 - 72 * p) + 'px';
+  banner.style.borderRadius = p > 0.02 ? '0 0 10px 10px' : '';
+  const avatarBtn = banner.querySelector('.profile-avatar-btn');
+  const avatar = banner.querySelector('.profile-avatar');
+  const size = Math.round(96 - 56 * p);
+  if (avatarBtn) { avatarBtn.style.width = size + 'px'; avatarBtn.style.height = size + 'px'; }
+  if (avatar) { avatar.style.width = size + 'px'; avatar.style.height = size + 'px'; }
+  const user = banner.querySelector('.profile-ident__user');
+  if (user) user.style.opacity = String(1 - Math.min(1, p * 2));
+  const name = banner.querySelector('.profile-ident__name');
+  if (name) name.style.fontSize = (24 - 4 * p) + 'px';
+  banner.style.opacity = '';
+  banner.style.transform = '';
+  banner.style.filter = '';
+  banner.style.webkitMaskImage = '';
+  banner.style.maskImage = '';
+  const navBar = document.getElementById('main-nav');
+  if (navBar) {
+    const scrollingDown = app.scrollTop > lastProfileScroll;
+    navBar.style.transform = app.scrollTop > 60 && scrollingDown ? 'translateY(140%)' : '';
+  }
+  lastProfileScroll = app.scrollTop;
+}
+
+function bindProfile() {
+  syncTextfields();
+  const nameInput = document.getElementById('profile-name-input');
+  nameInput.value = state.account.name || state.account.username;
+  syncTextfield(nameInput);
+
+  document.getElementById('profile-avatar-btn').addEventListener('click', () => document.getElementById('profile-pic-input').click());
+  document.getElementById('profile-pic-input').addEventListener('change', onProfilePicChange);
+  document.getElementById('banner-edit').addEventListener('click', () => document.getElementById('banner-input').click());
+  document.getElementById('banner-input').addEventListener('change', onBannerChange);
+
+  document.getElementById('profile-name-save').addEventListener('click', () => {
+    const name = nameInput.value.trim();
+    if (!name) { setFlash('กรุณากรอกชื่อ'); return; }
+    state.account.name = name;
+    saveState();
+    render();
+  });
+
+  const current = document.getElementById('profile-pw-current');
+  const pwNew = document.getElementById('profile-pw-new');
+  const pwConfirm = document.getElementById('profile-pw-confirm');
+  document.getElementById('profile-pw-save').addEventListener('click', () => {
+    if (hashStr(current.value) !== state.account.passwordHash) { setFlash('รหัสผ่านปัจจุบันไม่ถูกต้อง'); return; }
+    if (pwNew.value.length < 4) { setFlash('รหัสผ่านใหม่ต้องมีอย่างน้อย 4 ตัวอักษร'); return; }
+    if (pwNew.value !== pwConfirm.value) { setFlash('ยืนยันรหัสผ่านไม่ตรงกับรหัสผ่านใหม่'); return; }
+    state.account.passwordHash = hashStr(pwNew.value);
+    current.value = ''; pwNew.value = ''; pwConfirm.value = '';
+    syncTextfield(current); syncTextfield(pwNew); syncTextfield(pwConfirm);
+    saveState();
+    setFlash('บันทึกรหัสผ่านแล้ว');
+  });
+
+  document.querySelectorAll('.color-swatch').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      colorScheme = btn.dataset.colorName;
+      applySettings();
+      render();
+    });
+  });
+  document.querySelectorAll('.mode-option').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      colorMode = btn.dataset.modeName;
+      applySettings();
+      render();
+    });
+  });
+
+  document.getElementById('profile-logout').addEventListener('click', () => {
+    state.account = null;
+    saveState();
+    go('login');
+  });
+  const app = document.getElementById('app');
+  if (app && !app.dataset.profileScroll) {
+    app.dataset.profileScroll = '1';
+    app.addEventListener('scroll', updateProfileCollapse, { passive: true });
+  }
+  updateProfileCollapse();
+  updateBannerContrast();
+  bindBottomNav();
+}
+
+function onBannerChange(ev) {
+  const input = ev.target;
+  const files = Array.from(input.files || []);
+  input.value = '';
+  if (!files.length) return;
+  fileToDataUrl(files[0]).then((dataUrl) => {
+    if (!dataUrl) { setFlash('เพิ่มรูปแบนเนอร์ไม่สำเร็จ'); return; }
+    state.account.profileBanner = dataUrl;
+    saveState();
+    render({ noAnim: true });
+  });
+}
+
+function onProfilePicChange(ev) {
+  const input = ev.target;
+  const files = Array.from(input.files || []);
+  input.value = '';
+  if (!files.length) return;
+  const file = files[0];
+  fileToDataUrl(file).then((dataUrl) => {
+    if (!dataUrl) { setFlash('เพิ่มรูปโปรไฟล์ไม่สำเร็จ'); return; }
+    cropSource = dataUrl;
+    cropZoom = 1;
+    cropX = 0;
+    cropY = 0;
+    go('crop');
+  });
+}
+function renderCropHtml() {
+  return `
+<div class="top-app-bar">
+  <button class="icon-button" id="crop-back"><span class="material-icons">arrow_back</span></button>
+  <div class="grow"></div>
+  <h1 class="top-app-bar__title">ครอบรูปภาพ</h1>
+  <div class="grow"></div>
+</div>
+<main class="screen-main">
+  <p class="crop-hint">ลากรูปเพื่อจัดตำแหน่ง และปรับซูมด้านล่าง</p>
+  <div class="crop-preview" id="crop-preview"></div>
+  <div class="crop-zoom-row">
+    <span class="material-icons">zoom_out</span>
+    <input type="range" id="crop-zoom" min="1" max="3" step="0.05" value="${cropZoom}">
+    <span class="material-icons">zoom_in</span>
+  </div>
+  <button type="button" class="filled-button" id="crop-save"><span class="material-icons">check</span>บันทึก</button>
+</main>`;
+}
+
+function bindCrop() {
+  const preview = document.getElementById('crop-preview');
+  const slider = document.getElementById('crop-zoom');
+  function apply() {
+    preview.style.backgroundImage = 'url("' + cropSource + '")';
+    preview.style.backgroundSize = Math.round(cropZoom * 100) + '%';
+    preview.style.backgroundPosition = (50 + cropX * 100) + '% ' + (50 + cropY * 100) + '%';
+  }
+  apply();
+
+  document.getElementById('crop-back').addEventListener('click', () => { navTab = 'profile'; go('profile'); });
+  slider.addEventListener('input', () => { cropZoom = parseFloat(slider.value); apply(); });
+
+  let pointer = null;
+  let startX = 0;
+  let startY = 0;
+  let baseX = 0;
+  let baseY = 0;
+  preview.addEventListener('pointerdown', (e) => {
+    pointer = e.pointerId;
+    startX = e.clientX;
+    startY = e.clientY;
+    baseX = cropX;
+    baseY = cropY;
+  });
+  preview.addEventListener('pointermove', (e) => {
+    if (pointer !== e.pointerId) return;
+    const rect = preview.getBoundingClientRect();
+    cropX = Math.max(-0.5, Math.min(0.5, baseX - (e.clientX - startX) / rect.width));
+    cropY = Math.max(-0.5, Math.min(0.5, baseY - (e.clientY - startY) / rect.height));
+    apply();
+  });
+  preview.addEventListener('pointerup', () => { pointer = null; });
+  preview.addEventListener('pointercancel', () => { pointer = null; });
+
+  document.getElementById('crop-save').addEventListener('click', () => {
+    state.account.profilePic = cropSource;
+    state.account.profilePicCrop = { zoom: cropZoom, x: cropX, y: cropY };
+    saveState();
+    navTab = 'profile';
+    go('profile');
+  });
+}
+
+function render(options) {
+  const root = document.getElementById('app');
+  root.scrollTop = 0;
+  root.classList.remove('screen-enter');
+  if (!options || !options.noAnim) {
+    void root.offsetWidth;
+    root.classList.add('screen-enter');
+  }
+  const navRoot = document.getElementById('nav-root');
+  if (navRoot) {
+    if (screen !== 'profile') {
+      const navBar = document.getElementById('main-nav');
+      if (navBar) navBar.style.transform = '';
+      lastProfileScroll = 0;
+    }
+    navRoot.hidden = screen === 'login' || screen === 'signup' || screen === 'addJob' || screen === 'jobDetail' || screen === 'crop';
+    setNavActive(navTab);
+    updateNavAvatar();
+  }
+  switch (screen) {
+    case 'login': root.innerHTML = renderLoginHtml(); bindLogin(); break;
+    case 'signup': root.innerHTML = renderSignupHtml(); bindSignup(); break;
+    case 'home': root.innerHTML = renderHomeHtml(); bindHome(); break;
+    case 'dashboard': root.innerHTML = renderDashboardHtml(); bindDashboard(); break;
+    case 'history': root.innerHTML = renderHistoryHtml(); bindHistory(); break;
+    case 'addJob': root.innerHTML = renderAddJobHtml(); bindAddJob(); break;
+    case 'jobDetail': {
+      const job = state.jobs.find((j) => j.id === selectedJobId);
+      if (!job) { screen = 'dashboard'; root.innerHTML = renderDashboardHtml(); bindDashboard(); break; }
+      root.innerHTML = renderJobDetailHtml(job); bindJobDetail();
+      break;
+    }
+    case 'profile': root.innerHTML = renderProfileHtml(); bindProfile(); break;
+    case 'crop': root.innerHTML = renderCropHtml(); bindCrop(); break;
+  }
+}
+
+function init() {
+  loadSettings();
+  loadState();
+  document.getElementById('nav-root').innerHTML = bottomNavHtml();
+  document.body.insertAdjacentHTML('beforeend', `
+<div class="poster-scrim" id="poster-dialog" hidden>
+  <div class="poster-dialog" role="dialog" aria-modal="true" aria-label="โปรไฟล์ผู้โพสต์">
+    <div class="poster-avatar-large" id="poster-dlg-avatar"></div>
+    <h2 class="t-headline-large" id="poster-dlg-name"></h2>
+    <div class="poster-username" id="poster-dlg-user"></div>
+    <div class="poster-dlg-actions">
+      <button type="button" class="filled-tonal-button" id="poster-dlg-open">ดูโปรไฟล์</button>
+      <button type="button" class="filled-tonal-button" id="poster-dlg-close">ปิด</button>
+    </div>
+  </div>
+</div>`);
+  const posterDlg = document.getElementById('poster-dialog');
+  posterDlg.addEventListener('click', (e) => { if (e.target === posterDlg) posterDlg.hidden = true; });
+  document.getElementById('poster-dlg-close').addEventListener('click', () => { posterDlg.hidden = true; });
+  document.getElementById('poster-dlg-open').addEventListener('click', () => {
+    posterDlg.hidden = true;
+    navTab = 'profile';
+    go('profile');
+  });
+  bindBottomNav();
+  screen = state.account ? 'home' : 'login';
+  render();
+  document.addEventListener('click', (e) => {
+    const fabMenu = document.getElementById('fab-menu');
+    if (fabMenu && !fabMenu.hidden && !fabMenu.contains(e.target) && !e.target.closest('#add-job-btn')) {
+      fabMenu.hidden = true;
+      fabOpen = false;
+      const fab = document.getElementById('add-job-btn');
+      if (fab) {
+        fab.classList.remove('is-open');
+        fab.setAttribute('aria-label', 'เพิ่มงาน');
+        fab.querySelector('.material-icons').textContent = 'add';
+      }
+    }
+    document.querySelectorAll('.menu').forEach((menu) => {
+      if (menu.hidden) return;
+      const anchor = document.getElementById(menu.dataset.anchor || '');
+      if (anchor && (e.target === anchor || anchor.contains(e.target))) return;
+      if (menu.contains(e.target)) return;
+      menu.hidden = true;
+    });
+  });
+}
+
+init();
+})();
+</script>
+</body>
+</html>
