@@ -449,6 +449,7 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
 .comment-avatar { width: 32px; height: 32px; border-radius: var(--md-shape-full); background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); display: flex; align-items: center; justify-content: center; font-weight: 500; flex-shrink: 0; }
 .comment-body { flex: 1; min-width: 0; }
 .comment-meta { font-size: 11px; color: var(--md-sys-color-on-surface-variant); }
+.comment-author { border: none; background: transparent; padding: 0; font: inherit; font-weight: 500; color: var(--md-sys-color-primary); cursor: pointer; }
 .comment-text { font-size: 14px; color: var(--md-sys-color-on-surface); margin-top: 2px; overflow-wrap: anywhere; white-space: pre-wrap; }
 .poster-chip { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: none; background: transparent; color: var(--md-sys-color-on-surface-variant); font: inherit; font-size: 11px; cursor: pointer; }
 .poster-avatar { width: 20px; height: 20px; border-radius: var(--md-shape-full); display: inline-flex; align-items: center; justify-content: center; background-color: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); background-size: cover; background-position: center; background-repeat: no-repeat; font-size: 11px; flex-shrink: 0; }
@@ -483,6 +484,7 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
 #app.screen-enter > .dash-subbar,
 #app.screen-enter > .screen-main,
 #app.screen-enter > .profile-page,
+#app.screen-enter > .view-profile-page,
 #app.screen-enter > .login-screen {
   animation: m3-fade var(--md-dur-default) var(--md-sys-motion-effects-default),
              m3-slide-in var(--md-dur-spatial) var(--md-sys-motion-spatial-fast);
@@ -662,6 +664,8 @@ let cropY = 0;
 let lastProfileScroll = 0;
 let homeTypeFilter = '';
 let homeSubjectFilter = '';
+let viewProfile = null;
+let viewFrom = 'home';
 
 const JOB_TYPES = {
   exam: ['นัดสอบ', 'event'],
@@ -1291,6 +1295,29 @@ function openPoster(jobId) {
   dlg.hidden = false;
 }
 
+async function openProfileView(username, from) {
+  if (!username) return;
+  viewFrom = from || screen;
+  try {
+    const rows = await sbRequest('fakjob_state?select=id,payload');
+    const own = rows.find((r) => r.id === username);
+    const shared = rows.find((r) => r.id === 'jobs');
+    if (own && own.payload && own.payload.account) {
+      viewProfile = {
+        account: own.payload.account,
+        followedRooms: Array.isArray(own.payload.followedRooms) ? own.payload.followedRooms : [],
+        jobs: (Array.isArray(shared?.payload?.jobs) ? shared.payload.jobs : []).filter((j) => j.postedBy === username)
+      };
+      go('viewProfile');
+      return;
+    }
+  } catch (e) { /* ใช้ข้อมูลในเครื่อง */ }
+  if (state.account && state.account.username === username) {
+    viewProfile = { account: state.account, followedRooms: state.followedRooms, jobs: state.jobs.filter((j) => j.postedBy === username) };
+    go('viewProfile');
+  }
+}
+
 function bindFilterChips() {
   [['home-type-chip', 'home-type-menu'], ['home-subject-chip', 'home-subject-menu'],
    ['dash-type-chip', 'dash-type-menu'], ['dash-subject-chip', 'dash-subject-menu'],
@@ -1318,7 +1345,11 @@ function bindHome() {
     const like = card.querySelector('.job-like');
     if (like) like.addEventListener('click', (e) => { e.stopPropagation(); toggleLike(card.dataset.jobId); });
     const poster = card.querySelector('.poster-chip');
-    if (poster) poster.addEventListener('click', (e) => { e.stopPropagation(); openPoster(poster.dataset.posterJob); });
+    if (poster) poster.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const job = state.jobs.find((j) => j.id === poster.dataset.posterJob);
+      if (job) openProfileView(job.postedBy, screen);
+    });
   });
   bindBottomNav();
 }
@@ -1357,7 +1388,11 @@ function bindHistory() {
     const like = card.querySelector('.job-like');
     if (like) like.addEventListener('click', (e) => { e.stopPropagation(); toggleLike(card.dataset.jobId); });
     const poster = card.querySelector('.poster-chip');
-    if (poster) poster.addEventListener('click', (e) => { e.stopPropagation(); openPoster(poster.dataset.posterJob); });
+    if (poster) poster.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const job = state.jobs.find((j) => j.id === poster.dataset.posterJob);
+      if (job) openProfileView(job.postedBy, screen);
+    });
   });
   bindFilterChips();
   bindBottomNav();
@@ -1474,7 +1509,7 @@ function renderJobDetailHtml(job) {
     <div class="comment-item">
       <div class="comment-avatar">${escapeHtml((c.author || '?').charAt(0))}</div>
       <div class="comment-body">
-        <div class="comment-meta">${escapeHtml(c.author)} · ${fmtDateTime(c.createdAt)}</div>
+        <div class="comment-meta"><button type="button" class="comment-author" data-comment-user="${escapeHtml(c.authorUser || '')}" data-comment-name="${escapeHtml(c.author)}">${escapeHtml(c.author)}</button> · ${fmtDateTime(c.createdAt)}</div>
         <div class="comment-text">${escapeHtml(c.text)}</div>
       </div>
     </div>`).join('');
@@ -1620,7 +1655,11 @@ function bindDashboard() {
     const like = card.querySelector('.job-like');
     if (like) like.addEventListener('click', (e) => { e.stopPropagation(); toggleLike(card.dataset.jobId); });
     const poster = card.querySelector('.poster-chip');
-    if (poster) poster.addEventListener('click', (e) => { e.stopPropagation(); openPoster(poster.dataset.posterJob); });
+    if (poster) poster.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const job = state.jobs.find((j) => j.id === poster.dataset.posterJob);
+      if (job) openProfileView(job.postedBy, screen);
+    });
   });
 
   bindFilterChips();
@@ -1639,14 +1678,18 @@ function openMenu(anchor, menuEl) {
 
 function bindJobDetail() {
   document.getElementById('detail-back').addEventListener('click', () => {
-    if (detailFrom === 'home') { navTab = 'home'; go('home'); }
+    if (detailFrom === 'viewProfile') { go('viewProfile'); }
+    else if (detailFrom === 'home') { navTab = 'home'; go('home'); }
     else if (detailFrom === 'history') { navTab = 'history'; go('history'); }
     else { navTab = 'work'; go('dashboard'); }
   });
   const likeBtn = document.getElementById('job-like-btn');
   if (likeBtn) likeBtn.addEventListener('click', () => toggleLike(selectedJobId));
   const posterDetail = document.getElementById('poster-detail');
-  if (posterDetail) posterDetail.addEventListener('click', () => openPoster(selectedJobId));
+  if (posterDetail) posterDetail.addEventListener('click', () => {
+    const job = state.jobs.find((j) => j.id === selectedJobId);
+    if (job) openProfileView(job.postedBy, 'jobDetail');
+  });
 
   const commentInput = document.getElementById('comment-input');
   const commentSend = document.getElementById('comment-send');
@@ -1660,6 +1703,7 @@ function bindJobDetail() {
     job.comments.push({
       id: 'c-' + Date.now().toString(36),
       author: state.account ? (state.account.name || state.account.username) : 'guest',
+      authorUser: state.account ? state.account.username : '',
       text,
       createdAt: new Date().toISOString()
     });
@@ -1668,13 +1712,25 @@ function bindJobDetail() {
     render({ noAnim: true });
   }
   if (commentSend) commentSend.addEventListener('click', sendComment);
+  document.querySelectorAll('.comment-author').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      let user = btn.dataset.commentUser;
+      if (!user) {
+        const job = state.jobs.find((j) => j.postedByName === btn.dataset.commentName);
+        user = job ? job.postedBy : '';
+      }
+      if (!user && state.account && state.account.name === btn.dataset.commentName) user = state.account.username;
+      if (user) openProfileView(user, 'jobDetail');
+    });
+  });
   if (commentInput) commentInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendComment(); });
   const del = document.getElementById('job-delete');
   if (del) del.addEventListener('click', () => {
     if (!window.confirm('ลบงานนี้หรือไม่?')) return;
     state.jobs = state.jobs.filter((job) => job.id !== selectedJobId);
     saveState();
-    if (detailFrom === 'home') { navTab = 'home'; go('home'); }
+    if (detailFrom === 'viewProfile') { go('viewProfile'); }
+    else if (detailFrom === 'home') { navTab = 'home'; go('home'); }
     else if (detailFrom === 'history') { navTab = 'history'; go('history'); }
     else { navTab = 'work'; go('dashboard'); }
   });
@@ -1899,6 +1955,66 @@ function bindAddJob() {
   });
 
   document.getElementById('add-back').addEventListener('click', () => go('dashboard'));
+}
+
+function renderViewProfileHtml() {
+  const a = viewProfile ? viewProfile.account : null;
+  if (!a) return renderHomeHtml();
+  const pic = a.profilePic || '';
+  const crop = a.profilePicCrop;
+  const cropStyle = crop
+    ? `background-size: ${Math.round((crop.zoom || 1) * 100)}%; background-position: ${50 + (crop.x || 0) * 100}% ${50 + (crop.y || 0) * 100}%;`
+    : 'background-size: cover; background-position: center;';
+  const bannerStyle = a.profileBanner
+    ? `background-image: url(&quot;${escapeHtml(a.profileBanner)}&quot;); background-size: cover; background-position: center;`
+    : '';
+  const followed = viewProfile.followedRooms || [];
+  const chips = followed.map((f) => `<span class="home-chip">${escapeHtml(f.grade)}/${escapeHtml(f.room)}</span>`).join('');
+  const jobs = viewProfile.jobs || [];
+  const initial = escapeHtml((a.name || a.username || '?').charAt(0));
+  return `
+<div class="top-app-bar">
+  <button class="icon-button" id="view-back"><span class="material-icons">arrow_back</span></button>
+  <div class="grow"></div>
+  <h1 class="top-app-bar__title">โปรไฟล์</h1>
+  <div class="grow"></div>
+</div>
+<div class="view-profile-page">
+  <div class="profile-banner ${a.profileBanner ? 'has-image' : ''}" style="${bannerStyle}">
+    <span class="banner-blob banner-blob--a" aria-hidden="true"></span>
+    <span class="banner-blob banner-blob--b" aria-hidden="true"></span>
+    <span class="banner-blob banner-blob--c" aria-hidden="true"></span>
+  </div>
+  <header class="profile-header">
+    <div class="avatar" style="width: 96px; height: 96px; border-radius: 50%; ${cropStyle} ${pic ? `background-image: url(&quot;${escapeHtml(pic)}&quot;);` : `background: ${avatarColor(a.username)}; color: #FFFFFF; font-size: 32px; font-weight: 500; display: flex; align-items: center; justify-content: center;`}">${pic ? '' : initial}</div>
+    <div class="profile-ident">
+      <div class="profile-ident__name">${escapeHtml(a.name || a.username)}</div>
+      <div class="profile-ident__user">@${escapeHtml(a.username)}</div>
+    </div>
+  </header>
+  <main class="screen-main">
+    <section class="profile-section">
+      <div class="profile-section__label">ห้องที่ติดตาม</div>
+      <div class="home-chips">${chips || '<p class="empty-text">ยังไม่ได้ติดตามห้อง</p>'}</div>
+    </section>
+    <section class="profile-section">
+      <div class="profile-section__label">งานที่ฝาก (${jobs.length})</div>
+      <div id="view-jobs">${jobs.length ? jobs.map((job) => renderJobCardHtml(job)).join('') : '<p class="empty-text">ยังไม่มีงาน</p>'}</div>
+    </section>
+  </main>
+</div>`;
+}
+
+function bindViewProfile() {
+  document.getElementById('view-back').addEventListener('click', () => go(viewFrom || 'home'));
+  document.querySelectorAll('#view-jobs .job-card').forEach((card) => {
+    card.addEventListener('click', () => { detailFrom = 'viewProfile'; go('jobDetail', card.dataset.jobId); });
+    const like = card.querySelector('.job-like');
+    if (like) like.addEventListener('click', (e) => { e.stopPropagation(); toggleLike(card.dataset.jobId); });
+    const poster = card.querySelector('.poster-chip');
+    if (poster) poster.addEventListener('click', (e) => { e.stopPropagation(); openProfileView(poster.dataset.posterJob ? (state.jobs.find((j) => j.id === poster.dataset.posterJob) || {}).postedBy : '', 'viewProfile'); });
+  });
+  bindBottomNav();
 }
 
 function renderProfileHtml() {
@@ -2239,6 +2355,7 @@ function render(options) {
       break;
     }
     case 'profile': root.innerHTML = renderProfileHtml(); bindProfile(); break;
+    case 'viewProfile': root.innerHTML = renderViewProfileHtml(); bindViewProfile(); break;
     case 'crop': root.innerHTML = renderCropHtml(); bindCrop(); break;
   }
 }
