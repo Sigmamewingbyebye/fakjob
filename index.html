@@ -410,6 +410,7 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
 .profile-avatar-btn { width: 96px; height: 96px; padding: 0; border: none; border-radius: var(--md-shape-full); background: transparent; cursor: pointer; flex-shrink: 0; }
 .profile-avatar-btn .avatar { width: 88px; height: 88px; font-size: 32px; }
 .profile-ident { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.profile-message-btn { align-self: flex-start; margin-top: 8px; font-size: 13px; }
 .profile-ident__name { font-size: 24px; font-weight: 500; letter-spacing: 0; color: var(--md-sys-color-primary); text-shadow: 0 1px 4px rgba(255, 255, 255, 0.55); overflow-wrap: anywhere; }
 .profile-ident__user { font-size: 14px; color: color-mix(in srgb, var(--md-sys-color-primary) 60%, black); text-shadow: 0 1px 4px rgba(255, 255, 255, 0.55); overflow-wrap: anywhere; transition: opacity 200ms var(--md-sys-motion-effects-default); }
 .profile-banner.banner-light .profile-ident__user { color: color-mix(in srgb, var(--md-sys-color-primary) 60%, black); text-shadow: 0 1px 4px rgba(255, 255, 255, 0.6); }
@@ -495,12 +496,66 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
 .home-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .home-chip { display: inline-flex; align-items: center; padding: 6px 12px; border-radius: var(--md-shape-full); background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); font-size: 12px; font-weight: 500; }
 
+/* ---- chat ---- */
+.chat-list-page { gap: 14px; }
+.chat-list-search { display: flex; align-items: center; gap: 8px; padding: 0 14px; min-height: 44px; border-radius: var(--md-shape-full); background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface-variant); }
+.chat-list-search .material-icons { font-size: 20px; }
+.chat-list-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--md-sys-color-on-surface); font: inherit; font-size: 14px; }
+.chat-item { position: relative; display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px; border: 0; border-radius: var(--md-shape-lg); background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); text-align: left; font: inherit; cursor: pointer; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); transition: transform var(--md-dur-spatial) var(--md-sys-motion-spatial-fast), background var(--md-dur-default) var(--md-sys-motion-effects-default); }
+.chat-item:active { transform: scale(0.985); }
+.chat-item__body { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+.chat-item__top, .chat-item__bottom { display: flex; align-items: center; gap: 8px; }
+.chat-item__name { font-weight: 600; font-size: 15px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-item__time { font-size: 11px; color: var(--md-sys-color-on-surface-variant); }
+.chat-item__preview { font-size: 13px; color: var(--md-sys-color-on-surface-variant); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.chat-avatar { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.chat-tag { padding: 2px 8px; border-radius: var(--md-shape-full); background: var(--md-sys-color-tertiary-container); color: var(--md-sys-color-on-tertiary-container); font-size: 10px; font-weight: 600; white-space: nowrap; }
+.chat-tag--public { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+.chat-join { flex-shrink: 0; padding: 6px 12px; border-radius: var(--md-shape-full); background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-size: 12px; font-weight: 600; }
+.chat-room { display: flex; flex-direction: column; height: 100dvh; }
+.chat-room .top-app-bar { gap: 10px; flex-shrink: 0; }
+.chat-room__head { display: flex; flex-direction: column; min-width: 0; }
+.chat-room__title { font-size: 16px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-room__sub { font-size: 11px; color: var(--md-sys-color-on-surface-variant); }
+.chat-messages { flex: 1; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 10px; padding: 14px 16px 20px; }
+.chat-empty { text-align: center; margin: auto; }
+.chat-row { display: flex; align-items: flex-end; gap: 8px; max-width: 86%; }
+.chat-row--mine { align-self: flex-end; flex-direction: row-reverse; }
+.chat-msg-avatar { width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #FFFFFF; font-size: 13px; font-weight: 600; }
+.chat-bubble { padding: 10px 14px; border-radius: 18px 18px 18px 4px; background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface); font-size: 14px; line-height: 1.45; word-break: break-word; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); animation: m3-fade var(--md-dur-default) var(--md-sys-motion-effects-default), m3-rise var(--md-dur-spatial) var(--md-sys-motion-spatial-fast); }
+.chat-row--mine .chat-bubble { border-radius: 18px 18px 4px 18px; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+.chat-bubble__sender { font-size: 11px; font-weight: 600; color: var(--md-sys-color-primary); margin-bottom: 2px; }
+.chat-bubble__text { white-space: pre-wrap; }
+.chat-bubble__time { font-size: 10px; opacity: 0.6; text-align: right; margin-top: 4px; }
+.chat-composer { flex-shrink: 0; display: flex; align-items: flex-end; gap: 8px; padding: 8px 12px calc(10px + env(safe-area-inset-bottom)); background: var(--md-sys-color-surface); border-top: 1px solid var(--md-sys-color-outline-variant); }
+.chat-composer textarea { flex: 1; min-height: 44px; max-height: 120px; resize: none; padding: 11px 14px; border: 1px solid var(--md-sys-color-outline-variant); border-radius: var(--md-shape-full); background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface); font: inherit; font-size: 14px; outline: none; }
+.chat-composer textarea:focus { border-color: var(--md-sys-color-primary); }
+.chat-send { width: 44px; height: 44px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); cursor: pointer; }
+.chat-send:active { transform: scale(0.92); }
+.chat-user-list, .chat-member-list { display: flex; flex-direction: column; gap: 6px; }
+.chat-user-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border: 0; border-radius: var(--md-shape-md); background: var(--md-sys-color-surface-container-low); color: var(--md-sys-color-on-surface); text-align: left; font: inherit; cursor: pointer; }
+.chat-user-row__name, .chat-user-row__sub { display: block; }
+.chat-user-row__name { font-size: 14px; font-weight: 600; }
+.chat-user-row__sub { font-size: 12px; color: var(--md-sys-color-on-surface-variant); }
+.privacy-chips { display: flex; gap: 10px; margin: 8px 0; flex-wrap: wrap; }
+.privacy-chip { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 2px solid var(--md-sys-color-outline-variant); border-radius: var(--md-shape-full); background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+.privacy-chip.is-selected { border-color: var(--md-sys-color-primary); background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+.privacy-chip .material-icons { font-size: 18px; }
+.chat-hint { font-size: 12px; color: var(--md-sys-color-on-surface-variant); margin: 0 0 8px; }
+.chat-member-pick { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--md-shape-md); background: var(--md-sys-color-surface-container-low); font-size: 14px; cursor: pointer; }
+.chat-member-pick input { width: 18px; height: 18px; accent-color: var(--md-sys-color-primary); }
+.chat-create-group { width: 100%; margin-top: 12px; }
+.chat-member-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 14px; }
+
 /* ---- motion: screen enter + menu reveal (spatial for geometry, effects for opacity) ---- */
 #app.screen-enter > .top-app-bar,
 #app.screen-enter > .dash-subbar,
 #app.screen-enter > .screen-main,
 #app.screen-enter > .profile-page,
 #app.screen-enter > .view-profile-page,
+#app.screen-enter > .chat-list-page,
+#app.screen-enter > .chat-room,
+#app.screen-enter > .new-chat-page,
 #app.screen-enter > .login-screen {
   animation: m3-fade var(--md-dur-default) var(--md-sys-motion-effects-default),
              m3-slide-in var(--md-dur-spatial) var(--md-sys-motion-spatial-fast);
@@ -529,11 +584,13 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
 }
 /* ---- desktop / tablet layout ---- */
 @media (min-width: 768px) {
-  .top-app-bar, .dash-subbar, .screen-main, .profile-page, .view-profile-page, .login-screen {
+  .top-app-bar, .dash-subbar, .screen-main, .profile-page, .view-profile-page, .login-screen,
+  .chat-list-page, .new-chat-page {
     max-width: 880px;
     margin-left: auto;
     margin-right: auto;
   }
+  .chat-room { max-width: 760px; margin: 0 auto; border-left: 1px solid var(--md-sys-color-outline-variant); border-right: 1px solid var(--md-sys-color-outline-variant); }
   .top-app-bar { border-radius: 0 0 20px 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); }
   .nav-bar { left: 0; right: 0; width: min(560px, 100%); margin: 0 auto; }
   .room-grid { grid-template-columns: repeat(4, 1fr); }
@@ -696,9 +753,14 @@ const SUBJECTS = [
   'สังคมศึกษา', 'ประวัติศาสตร์', 'ศิลปะ', 'นาฎศิลป์', 'ภาษาจีน', 'ฟิสิกส์'
 ];
 
-const state = { account: null, jobs: [], followedRooms: [], likedIds: [] };
+const state = { account: null, jobs: [], followedRooms: [], likedIds: [], chats: [] };
 let screen = 'login';
 let selectedJobId = null;
+let currentChatId = null;
+let knownAccounts = [];
+let newChatPrivacy = 'public';
+let groupNameDraft = '';
+let selectedMembers = [];
 let navTab = 'home';
 let selectedGrade = 'M.1';
 let currentRoom = null;
@@ -801,11 +863,12 @@ async function cloudPull() {
   if (syncing || pushPending) return;
   syncing = true;
   try {
-    const before = JSON.stringify({ a: state.account, j: state.jobs, f: state.followedRooms, l: state.likedIds });
+    const before = JSON.stringify({ a: state.account, j: state.jobs, f: state.followedRooms, l: state.likedIds, c: state.chats });
     const res = await sbRequest('fakjob_state?select=id,payload,updated_at');
     const rows = await res.json();
     if (rows.length) {
       const shared = rows.find((r) => r.id === 'jobs');
+      const chatsRow = rows.find((r) => r.id === 'chats');
       const ownRow = rows.find((r) => r.id === syncRow());
       const legacy = rows.find((r) => r.id === SYNC_ROW);
 
@@ -813,6 +876,11 @@ async function cloudPull() {
       const sharedFresh = shared && fresh(shared);
       const ownFresh = ownRow && fresh(ownRow);
       if (sharedFresh) state.jobs = Array.isArray(shared.payload.jobs) ? shared.payload.jobs : [];
+      if (chatsRow && chatsRow.payload && Array.isArray(chatsRow.payload.chats)) state.chats = chatsRow.payload.chats;
+      knownAccounts = rows
+        .filter((r) => r.payload && r.payload.account && r.payload.account.username)
+        .map((r) => r.payload.account);
+      if (state.account && !knownAccounts.some((a) => a.username === state.account.username)) knownAccounts.push(state.account);
       if (ownFresh) {
         state.followedRooms = Array.isArray(ownRow.payload.followedRooms) ? ownRow.payload.followedRooms : [];
         state.likedIds = Array.isArray(ownRow.payload.likedIds) ? ownRow.payload.likedIds : [];
@@ -837,14 +905,16 @@ async function cloudPull() {
         cloudPush();
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        account: state.account, jobs: state.jobs, followedRooms: state.followedRooms, likedIds: state.likedIds
+        account: state.account, jobs: state.jobs, followedRooms: state.followedRooms, likedIds: state.likedIds, chats: state.chats
       }));
       syncState = 'on';
-      const safeScreen = screen === 'dashboard' || screen === 'home' || screen === 'history' || screen === 'profile';
+      const safeScreen = screen === 'dashboard' || screen === 'home' || screen === 'history'
+        || screen === 'profile' || screen === 'chat' || screen === 'newChat';
       const focus = document.activeElement;
       const typing = focus && (focus.tagName === 'INPUT' || focus.tagName === 'TEXTAREA');
-      const changed = before !== JSON.stringify({ a: state.account, j: state.jobs, f: state.followedRooms, l: state.likedIds });
-      if (changed && safeScreen && !typing) render({ noAnim: true });
+      const changed = before !== JSON.stringify({ a: state.account, j: state.jobs, f: state.followedRooms, l: state.likedIds, c: state.chats });
+      if (changed && screen === 'chatRoom') refreshChatRoom();
+      else if (changed && safeScreen && !typing) render({ noAnim: true });
     }
   } catch (e) {
     syncState = 'off';
@@ -870,6 +940,7 @@ async function cloudPush() {
     });
     await Promise.all([
       post('jobs', { jobs: state.jobs }),
+      post('chats', { chats: state.chats }),
       post(syncRow(), { account: state.account, followedRooms: state.followedRooms, likedIds: state.likedIds })
     ]);
     syncState = 'on';
@@ -936,15 +1007,17 @@ function loadState() {
     state.jobs = parsed && Array.isArray(parsed.jobs) ? parsed.jobs : [];
     state.followedRooms = parsed && Array.isArray(parsed.followedRooms) ? parsed.followedRooms : [];
     state.likedIds = parsed && Array.isArray(parsed.likedIds) ? parsed.likedIds : [];
+    state.chats = parsed && Array.isArray(parsed.chats) ? parsed.chats : [];
   } catch (e) {
     state.account = null;
     state.jobs = [];
+    state.chats = [];
   }
 }
 
 function saveState() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ account: state.account, jobs: state.jobs, followedRooms: state.followedRooms, likedIds: state.likedIds }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ account: state.account, jobs: state.jobs, followedRooms: state.followedRooms, likedIds: state.likedIds, chats: state.chats }));
   } catch (e) { /* storage unavailable */ }
   lastLocalChange = Date.now();
   scheduleCloudPush();
@@ -1191,6 +1264,7 @@ function bottomNavHtml() {
     ['home', 'home', 'หน้าหลัก'],
     ['work', 'work', 'ฝากงาน'],
     ['history', 'history', 'ประวัติ'],
+    ['chat', 'chat_bubble', 'แชท'],
     ['profile', 'account_circle', 'โปรไฟล์']
   ];
   return `
@@ -1237,6 +1311,7 @@ function bindBottomNav() {
     if (key === 'home') go('home');
     else if (key === 'work') { currentRoom = null; go('dashboard'); }
     else if (key === 'history') go('history');
+    else if (key === 'chat') go('chat');
     else go('profile');
   }
 
@@ -1379,6 +1454,7 @@ function openPoster(jobId) {
   avatar.textContent = pic ? '' : (job.postedByName || job.postedBy || '?').charAt(0);
   document.getElementById('poster-dlg-name').textContent = job.postedByName || job.postedBy || 'ไม่ระบุ';
   document.getElementById('poster-dlg-user').textContent = '@' + (job.postedBy || '');
+  dlg.dataset.user = job.postedBy || '';
   dlg.hidden = false;
 }
 
@@ -1431,6 +1507,376 @@ async function openProfileView(username, from) {
     viewProfile = { account: state.account, followedRooms: state.followedRooms, jobs: state.jobs.filter((j) => j.postedBy === username) };
     go('viewProfile');
   }
+}
+
+/* ---- chat helpers ---- */
+function me() {
+  return state.account ? state.account.username : '';
+}
+
+function chatId() {
+  return 'chat-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+}
+
+function currentChat() {
+  return state.chats.find((c) => c.id === currentChatId) || null;
+}
+
+function lastChatTime(chat) {
+  const msgs = Array.isArray(chat.messages) ? chat.messages : [];
+  if (msgs.length && msgs[msgs.length - 1].createdAt) return Date.parse(msgs[msgs.length - 1].createdAt) || 0;
+  return Date.parse(chat.createdAt) || 0;
+}
+
+function accountFor(username) {
+  return knownAccounts.find((a) => a.username === username) || null;
+}
+
+function chatTitle(chat) {
+  if (chat.type === 'group') return chat.name || 'กลุ่ม';
+  const other = (chat.members || []).find((u) => u !== me());
+  const acc = accountFor(other);
+  return (acc && acc.name) || chat.name || other || 'แชท';
+}
+
+function chatAvatarHtml(chat, size) {
+  const s = size || 44;
+  const base = `width:${s}px;height:${s}px;flex-shrink:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background-size:cover;background-position:center;font-weight:600;font-size:${Math.round(s * 0.38)}px;`;
+  if (chat.type === 'group') {
+    return `<span class="chat-avatar" style="${base} background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);"><span class="material-icons" style="font-size:${Math.round(s * 0.5)}px">group</span></span>`;
+  }
+  const other = (chat.members || []).find((u) => u !== me());
+  const acc = accountFor(other);
+  const pic = (acc && acc.profilePic) || '';
+  if (pic) return `<span class="chat-avatar" style="${base} background-image:url(&quot;${escapeHtml(pic)}&quot;)"></span>`;
+  const name = (acc && acc.name) || chat.name || other || '?';
+  return `<span class="chat-avatar" style="${base} background:${avatarColor(other || name)};color:#FFFFFF;">${escapeHtml(name.charAt(0))}</span>`;
+}
+
+function fmtChatTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  return d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+}
+
+function renderMessagesHtml(chat) {
+  const msgs = Array.isArray(chat.messages) ? chat.messages : [];
+  if (!msgs.length) return '<p class="empty-text chat-empty">ยังไม่มีข้อความ — เริ่มสนทนากันเลย</p>';
+  return msgs.map((m) => {
+    const mine = m.sender === me();
+    const acc = accountFor(m.sender);
+    const senderName = m.senderName || (acc && acc.name) || m.sender || 'ไม่ระบุ';
+    const avatar = mine ? '' : `<span class="chat-msg-avatar" style="background:${avatarColor(m.sender || senderName)}">${escapeHtml(senderName.charAt(0))}</span>`;
+    return `<div class="chat-row ${mine ? 'chat-row--mine' : ''}">
+      ${avatar}
+      <div class="chat-bubble">
+        ${mine ? '' : `<div class="chat-bubble__sender">${escapeHtml(senderName)}</div>`}
+        <div class="chat-bubble__text">${escapeHtml(m.text)}</div>
+        <div class="chat-bubble__time">${fmtChatTime(m.createdAt)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openChatRoom(chat) {
+  if (!chat) return;
+  currentChatId = chat.id;
+  navTab = 'chat';
+  go('chatRoom');
+}
+
+function startDirectChat(username, name) {
+  if (!state.account || !username || username === me()) return;
+  let chat = state.chats.find((c) => c.type === 'direct'
+    && (c.members || []).indexOf(me()) !== -1
+    && (c.members || []).indexOf(username) !== -1);
+  if (!chat) {
+    chat = {
+      id: chatId(), type: 'direct', privacy: 'private',
+      name: name || username, members: [me(), username],
+      createdBy: me(), createdAt: new Date().toISOString(), messages: []
+    };
+    state.chats.unshift(chat);
+    saveState();
+  }
+  openChatRoom(chat);
+}
+
+function createGroupChat(name, privacy, members) {
+  if (!state.account || !name) return;
+  const all = [me()];
+  (members || []).forEach((u) => { if (u !== me() && all.indexOf(u) === -1) all.push(u); });
+  const chat = {
+    id: chatId(), type: 'group', privacy, name,
+    members: all, createdBy: me(), createdAt: new Date().toISOString(), messages: []
+  };
+  state.chats.unshift(chat);
+  newChatPrivacy = 'public';
+  groupNameDraft = '';
+  selectedMembers = [];
+  saveState();
+  openChatRoom(chat);
+}
+
+function toggleJoinGroup(id) {
+  const chat = state.chats.find((c) => c.id === id);
+  if (!chat || !state.account) return;
+  const i = (chat.members || []).indexOf(me());
+  if (i === -1) chat.members.push(me());
+  else chat.members.splice(i, 1);
+  saveState();
+  render({ noAnim: true });
+}
+
+function sendChatMessage() {
+  const input = document.getElementById('chat-input');
+  const chat = currentChat();
+  if (!input || !chat || !state.account) return;
+  const text = input.value.trim();
+  if (!text) return;
+  if (!Array.isArray(chat.messages)) chat.messages = [];
+  chat.messages.push({
+    id: 'msg-' + Date.now().toString(36),
+    sender: me(),
+    senderName: state.account.name || me(),
+    text,
+    createdAt: new Date().toISOString()
+  });
+  input.value = '';
+  input.style.height = '';
+  saveState();
+  refreshChatRoom();
+}
+
+function refreshChatRoom() {
+  const chat = currentChat();
+  if (!chat) { render({ noAnim: true }); return; }
+  const box = document.getElementById('chat-messages');
+  if (box) {
+    box.innerHTML = renderMessagesHtml(chat);
+    box.scrollTop = box.scrollHeight;
+  }
+  const title = document.getElementById('chat-room-title');
+  if (title) title.textContent = chatTitle(chat);
+  const sub = document.getElementById('chat-room-sub');
+  if (sub) {
+    sub.textContent = chat.type === 'group'
+      ? `${(chat.members || []).length} สมาชิก · ${chat.privacy === 'public' ? 'สาธารณะ' : 'ส่วนตัว'}`
+      : `@${(chat.members || []).find((u) => u !== me()) || ''}`;
+  }
+}
+
+function renderChatHtml() {
+  const myChats = state.chats.filter((c) => (c.members || []).indexOf(me()) !== -1)
+    .sort((a, b) => lastChatTime(b) - lastChatTime(a));
+  const publicGroups = state.chats.filter((c) => c.type === 'group' && c.privacy === 'public'
+    && (c.members || []).indexOf(me()) === -1)
+    .sort((a, b) => lastChatTime(b) - lastChatTime(a));
+  const row = (chat, joinable) => {
+    const msgs = Array.isArray(chat.messages) ? chat.messages : [];
+    const last = msgs[msgs.length - 1];
+    const preview = last ? (last.sender === me() ? 'คุณ: ' : '') + last.text : 'ยังไม่มีข้อความ';
+    const time = last ? fmtChatTime(last.createdAt) : '';
+    return `<button type="button" class="chat-item" data-chat="${escapeHtml(chat.id)}">
+      ${chatAvatarHtml(chat, 48)}
+      <span class="chat-item__body">
+        <span class="chat-item__top">
+          <span class="chat-item__name">${escapeHtml(chatTitle(chat))}</span>
+          <span class="chat-item__time">${escapeHtml(time)}</span>
+        </span>
+        <span class="chat-item__bottom">
+          <span class="chat-item__preview">${escapeHtml(preview)}</span>
+          ${chat.type === 'group' ? `<span class="chat-tag ${chat.privacy === 'public' ? 'chat-tag--public' : ''}">${chat.privacy === 'public' ? 'สาธารณะ' : 'ส่วนตัว'}</span>` : ''}
+        </span>
+      </span>
+      ${joinable ? `<span class="chat-join" data-join="${escapeHtml(chat.id)}">เข้าร่วม</span>` : ''}
+    </button>`;
+  };
+  return `
+<div class="top-app-bar">
+  <h1 class="top-app-bar__title">แชท</h1>
+  <div class="grow"></div>
+  <button type="button" class="icon-button" id="new-chat-btn" aria-label="แชทใหม่"><span class="material-icons">edit_square</span></button>
+</div>
+<main class="screen-main screen-main--nav chat-list-page">
+  <div class="chat-list-search">
+    <span class="material-icons">search</span>
+    <input id="chat-search" type="search" placeholder="ค้นหาแชท" autocomplete="off">
+  </div>
+  <section class="profile-section">
+    <div class="profile-section__label">แชทของฉัน (${myChats.length})</div>
+    <div id="chat-list">${myChats.length ? myChats.map((c) => row(c, false)).join('') : '<p class="empty-text">ยังไม่มีแชท — กดปุ่มมุมขวาเพื่อเริ่มสนทนา</p>'}</div>
+  </section>
+  ${publicGroups.length ? `
+  <section class="profile-section">
+    <div class="profile-section__label">กลุ่มสาธารณะ</div>
+    <div id="public-chat-list">${publicGroups.map((c) => row(c, true)).join('')}</div>
+  </section>` : ''}
+</main>`;
+}
+
+function renderChatRoomHtml() {
+  const chat = currentChat();
+  if (!chat) return renderChatHtml();
+  const sub = chat.type === 'group'
+    ? `${(chat.members || []).length} สมาชิก · ${chat.privacy === 'public' ? 'สาธารณะ' : 'ส่วนตัว'}`
+    : `@${(chat.members || []).find((u) => u !== me()) || ''}`;
+  return `
+<div class="chat-room">
+  <div class="top-app-bar">
+    <button class="icon-button" id="chat-back"><span class="material-icons">arrow_back</span></button>
+    ${chatAvatarHtml(chat, 40)}
+    <div class="chat-room__head">
+      <div class="chat-room__title" id="chat-room-title">${escapeHtml(chatTitle(chat))}</div>
+      <div class="chat-room__sub" id="chat-room-sub">${escapeHtml(sub)}</div>
+    </div>
+    <div class="grow"></div>
+    ${chat.type === 'group' ? `<button class="icon-button" id="chat-members-btn" aria-label="สมาชิก"><span class="material-icons">group</span></button>` : ''}
+  </div>
+  <div class="chat-messages" id="chat-messages">${renderMessagesHtml(chat)}</div>
+  <form class="chat-composer" id="chat-form">
+    <textarea id="chat-input" rows="1" placeholder="พิมพ์ข้อความ..." autocomplete="off"></textarea>
+    <button type="submit" class="chat-send" aria-label="ส่งข้อความ"><span class="material-icons">send</span></button>
+  </form>
+</div>`;
+}
+
+function renderNewChatHtml() {
+  const meUser = me();
+  const users = knownAccounts.filter((a) => a.username !== meUser);
+  const avatar = (a, size) => chatAvatarHtml({ type: 'direct', members: [meUser, a.username], name: a.name || a.username }, size);
+  const directRows = users.map((a) => `<button type="button" class="chat-user-row" data-direct="${escapeHtml(a.username)}">
+    ${avatar(a, 40)}
+    <span><span class="chat-user-row__name">${escapeHtml(a.name || a.username)}</span><span class="chat-user-row__sub">@${escapeHtml(a.username)}</span></span>
+  </button>`).join('');
+  const memberRows = users.map((a) => `<label class="chat-member-pick">
+    <input type="checkbox" value="${escapeHtml(a.username)}" ${selectedMembers.indexOf(a.username) !== -1 ? 'checked' : ''}>
+    ${avatar(a, 36)}
+    <span>${escapeHtml(a.name || a.username)}</span>
+  </label>`).join('');
+  return `
+<div class="top-app-bar">
+  <button class="icon-button" id="new-chat-back"><span class="material-icons">arrow_back</span></button>
+  <h1 class="top-app-bar__title">แชทใหม่</h1>
+</div>
+<main class="screen-main screen-main--nav new-chat-page">
+  <section class="profile-section">
+    <div class="profile-section__label">ส่งข้อความหาบุคคล</div>
+    ${users.length ? `<div class="chat-user-list">${directRows}</div>` : '<p class="empty-text">ยังไม่มีบัญชีอื่นในระบบ</p>'}
+  </section>
+  <section class="profile-section">
+    <div class="profile-section__label">สร้างกลุ่ม</div>
+    <div class="textfield"><input id="group-name" class="textfield__input" type="text" value="${escapeHtml(groupNameDraft)}" placeholder="ชื่อกลุ่ม"><span class="textfield__label">ชื่อกลุ่ม</span></div>
+    <div class="profile-section__label">ความเป็นส่วนตัว</div>
+    <div class="privacy-chips">
+      <button type="button" class="privacy-chip ${newChatPrivacy === 'public' ? 'is-selected' : ''}" data-privacy="public"><span class="material-icons">public</span>สาธารณะ</button>
+      <button type="button" class="privacy-chip ${newChatPrivacy === 'private' ? 'is-selected' : ''}" data-privacy="private"><span class="material-icons">lock</span>ส่วนตัว</button>
+    </div>
+    <p class="chat-hint">${newChatPrivacy === 'public' ? 'ใครก็ได้ที่เห็นกลุ่มสามารถเข้าร่วมได้' : 'เฉพาะสมาชิกที่คุณเลือกเท่านั้นที่เห็นและเข้าร่วมได้'}</p>
+    <div class="profile-section__label">เลือกสมาชิก</div>
+    ${users.length ? `<div class="chat-member-list">${memberRows}</div>` : '<p class="empty-text">ยังไม่มีบัญชีอื่นในระบบ</p>'}
+    <button type="button" class="filled-button chat-create-group" id="group-create"><span class="material-icons">group_add</span>สร้างกลุ่ม</button>
+  </section>
+</main>`;
+}
+
+function syncSelectedMembers() {
+  selectedMembers = Array.from(document.querySelectorAll('.chat-member-pick input:checked')).map((el) => el.value);
+}
+
+function showChatMembersDialog() {
+  const chat = currentChat();
+  if (!chat) return;
+  const list = (chat.members || []).map((u) => {
+    const acc = accountFor(u);
+    return `<div class="chat-member-row">${chatAvatarHtml({ type: 'direct', members: [me(), u], name: (acc && acc.name) || u }, 36)}<span>${escapeHtml((acc && acc.name) || u)}</span>${u === chat.createdBy ? '<span class="chat-tag">เจ้าของ</span>' : ''}</div>`;
+  }).join('');
+  const wrap = document.createElement('div');
+  wrap.className = 'poster-scrim';
+  wrap.innerHTML = `<div class="poster-dialog" role="dialog" aria-modal="true" aria-label="สมาชิก"><h2 class="t-headline-large">สมาชิก (${(chat.members || []).length})</h2><div class="chat-member-list">${list}</div><button type="button" class="filled-tonal-button" id="chat-members-close">ปิด</button></div>`;
+  document.body.appendChild(wrap);
+  wrap.addEventListener('click', (e) => { if (e.target === wrap || e.target.id === 'chat-members-close') wrap.remove(); });
+}
+
+function bindChat() {
+  const newBtn = document.getElementById('new-chat-btn');
+  if (newBtn) newBtn.addEventListener('click', () => {
+    groupNameDraft = '';
+    selectedMembers = [];
+    newChatPrivacy = 'public';
+    go('newChat');
+  });
+  document.querySelectorAll('#chat-list .chat-item, #public-chat-list .chat-item').forEach((item) => {
+    item.addEventListener('click', (e) => {
+      if (e.target.closest('.chat-join')) {
+        e.stopPropagation();
+        toggleJoinGroup(item.dataset.chat);
+        return;
+      }
+      currentChatId = item.dataset.chat;
+      go('chatRoom');
+    });
+  });
+  const search = document.getElementById('chat-search');
+  if (search) search.addEventListener('input', () => {
+    const q = search.value.trim().toLowerCase();
+    document.querySelectorAll('#chat-list .chat-item, #public-chat-list .chat-item').forEach((it) => {
+      it.hidden = !!q && it.textContent.toLowerCase().indexOf(q) === -1;
+    });
+  });
+  bindBottomNav();
+}
+
+function bindChatRoom() {
+  const back = document.getElementById('chat-back');
+  if (back) back.addEventListener('click', () => go('chat'));
+  const form = document.getElementById('chat-form');
+  if (form) form.addEventListener('submit', (e) => { e.preventDefault(); sendChatMessage(); });
+  const input = document.getElementById('chat-input');
+  if (input) {
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
+    });
+    input.addEventListener('input', () => {
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+    });
+  }
+  const membersBtn = document.getElementById('chat-members-btn');
+  if (membersBtn) membersBtn.addEventListener('click', showChatMembersDialog);
+  const box = document.getElementById('chat-messages');
+  if (box) box.scrollTop = box.scrollHeight;
+}
+
+function bindNewChat() {
+  const back = document.getElementById('new-chat-back');
+  if (back) back.addEventListener('click', () => go('chat'));
+  document.querySelectorAll('[data-direct]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const a = accountFor(btn.dataset.direct);
+      startDirectChat(btn.dataset.direct, a && a.name ? a.name : btn.dataset.direct);
+    });
+  });
+  document.querySelectorAll('[data-privacy]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      newChatPrivacy = btn.dataset.privacy;
+      const nameEl = document.getElementById('group-name');
+      if (nameEl) groupNameDraft = nameEl.value;
+      syncSelectedMembers();
+      render({ noAnim: true });
+    });
+  });
+  const name = document.getElementById('group-name');
+  if (name) name.addEventListener('input', () => { groupNameDraft = name.value; });
+  const create = document.getElementById('group-create');
+  if (create) create.addEventListener('click', () => {
+    syncSelectedMembers();
+    const nameEl = document.getElementById('group-name');
+    const n = (nameEl && nameEl.value || groupNameDraft).trim();
+    if (!n) { setFlash('ใส่ชื่อกลุ่มก่อนครับ'); return; }
+    createGroupChat(n, newChatPrivacy, selectedMembers);
+  });
 }
 
 function bindFilterChips() {
@@ -2153,6 +2599,7 @@ function renderViewProfileHtml() {
     <div class="profile-ident">
       <div class="profile-ident__name">${escapeHtml(a.name || a.username)}</div>
       <div class="profile-ident__user">@${escapeHtml(a.username)}</div>
+      ${ownAccount ? '' : `<button type="button" class="filled-tonal-button profile-message-btn" id="view-message"><span class="material-icons">chat</span>ส่งข้อความหาบุคคลนี้</button>`}
     </div>
   </header>
   <main class="screen-main screen-main--nav">
@@ -2170,6 +2617,11 @@ function renderViewProfileHtml() {
 
 function bindViewProfile() {
   document.getElementById('view-back').addEventListener('click', () => go(viewFrom || 'home'));
+  const msgBtn = document.getElementById('view-message');
+  if (msgBtn) msgBtn.addEventListener('click', () => {
+    const a = viewProfile && viewProfile.account;
+    if (a) startDirectChat(a.username, a.name || a.username);
+  });
   document.querySelectorAll('#view-jobs .job-card').forEach((card) => {
     card.addEventListener('click', () => { detailFrom = 'viewProfile'; go('jobDetail', card.dataset.jobId); });
     const like = card.querySelector('.job-like');
@@ -2500,7 +2952,8 @@ function render(options) {
       if (navBar) navBar.style.transform = '';
       lastProfileScroll = 0;
     }
-    navRoot.hidden = screen === 'login' || screen === 'signup' || screen === 'addJob' || screen === 'jobDetail' || screen === 'crop';
+    navRoot.hidden = screen === 'login' || screen === 'signup' || screen === 'addJob' || screen === 'jobDetail'
+      || screen === 'crop' || screen === 'chatRoom' || screen === 'newChat';
     setNavActive(navTab);
     updateNavAvatar();
   }
@@ -2519,6 +2972,9 @@ function render(options) {
     }
     case 'profile': root.innerHTML = renderProfileHtml(); bindProfile(); break;
     case 'viewProfile': root.innerHTML = renderViewProfileHtml(); bindViewProfile(); break;
+    case 'chat': root.innerHTML = renderChatHtml(); bindChat(); break;
+    case 'chatRoom': root.innerHTML = renderChatRoomHtml(); bindChatRoom(); break;
+    case 'newChat': root.innerHTML = renderNewChatHtml(); bindNewChat(); break;
     case 'crop': root.innerHTML = renderCropHtml(); bindCrop(); break;
   }
 }
@@ -2546,8 +3002,9 @@ function init() {
   document.getElementById('poster-dlg-close').addEventListener('click', () => { posterDlg.hidden = true; });
   document.getElementById('poster-dlg-open').addEventListener('click', () => {
     posterDlg.hidden = true;
-    navTab = 'profile';
-    go('profile');
+    const user = posterDlg.dataset.user;
+    if (user && user === me()) go('profile');
+    else openProfileView(user, screen);
   });
   bindBottomNav();
   screen = state.account ? 'home' : 'login';
