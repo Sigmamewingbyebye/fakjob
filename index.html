@@ -774,6 +774,7 @@ let currentChatId = null;
 let pendingJoin = '';
 let knownAccounts = [];
 let knownRows = [];
+let accountsSig = '';
 let newChatPrivacy = 'public';
 let groupNameDraft = '';
 let selectedMembers = [];
@@ -899,6 +900,13 @@ async function cloudPull() {
         .filter((r) => r.payload && r.payload.account && r.payload.account.username)
         .map((r) => r.payload.account);
       if (state.account && !knownAccounts.some((a) => a.username === state.account.username)) knownAccounts.push(state.account);
+      const sig = knownAccounts.map((a) => [a.username, a.name, (a.profilePic || '').length, (a.profileBanner || '').length].join(':')).join('|');
+      const accountsChanged = sig !== accountsSig;
+      accountsSig = sig;
+      if (accountsChanged && screen === 'viewProfile' && viewProfile && viewProfile.account) {
+        const freshRow = findProfileRow(viewProfile.account.username, viewProfile.account.name);
+        if (freshRow && freshRow.payload && freshRow.payload.account) setViewProfile(freshRow);
+      }
       if (ownFresh) {
         state.followedRooms = Array.isArray(ownRow.payload.followedRooms) ? ownRow.payload.followedRooms : [];
         state.likedIds = Array.isArray(ownRow.payload.likedIds) ? ownRow.payload.likedIds : [];
@@ -933,8 +941,8 @@ async function cloudPull() {
       const focus = document.activeElement;
       const typing = focus && (focus.tagName === 'INPUT' || focus.tagName === 'TEXTAREA');
       const changed = before !== JSON.stringify({ a: state.account, j: state.jobs, f: state.followedRooms, l: state.likedIds, c: state.chats });
-      if (changed && screen === 'chatRoom') refreshChatRoom();
-      else if (changed && safeScreen && !typing) render({ noAnim: true });
+      if (changed && !accountsChanged && screen === 'chatRoom') refreshChatRoom();
+      else if ((changed || accountsChanged) && (safeScreen || screen === 'chatRoom') && !typing) render({ noAnim: true });
     }
   } catch (e) {
     syncState = 'off';
@@ -1682,7 +1690,9 @@ function renderMessagesHtml(chat) {
     const mine = m.sender === me();
     const acc = accountFor(m.sender);
     const senderName = m.senderName || (acc && acc.name) || m.sender || 'ไม่ระบุ';
-    const avatar = mine ? '' : `<span class="chat-msg-avatar" style="background:${avatarColor(m.sender || senderName)}">${escapeHtml(senderName.charAt(0))}</span>`;
+    const avatar = mine ? '' : (acc && acc.profilePic
+      ? `<span class="chat-msg-avatar" style="background-image:url(&quot;${escapeHtml(acc.profilePic)}&quot;);background-size:cover;background-position:center"></span>`
+      : `<span class="chat-msg-avatar" style="background:${avatarColor(m.sender || senderName)}">${escapeHtml(senderName.charAt(0))}</span>`);
     return `<div class="chat-row ${mine ? 'chat-row--mine' : ''}">
       ${avatar}
       <div class="chat-bubble">
@@ -2031,7 +2041,9 @@ function bindChatRoom() {
       if (!chat || chat.type !== 'direct') return;
       const other = (chat.members || []).find((u) => u !== me());
       const acc = accountFor(other);
-      openProfileView(other, 'chatRoom', acc && acc.name);
+      const name = (acc && acc.name) || chat.name || '';
+      const ok = openProfileView(other, 'chatRoom', name);
+      if (!ok && name) openProfileByName(name, 'chatRoom');
     };
     head.addEventListener('click', open);
     head.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
