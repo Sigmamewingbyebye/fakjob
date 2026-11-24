@@ -542,6 +542,8 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
 .chat-attach:active { transform: scale(0.92); }
 .chat-create-group { width: 100%; margin-top: 12px; }
 .chat-join-link-btn { margin: 0 0 4px; font-size: 13px; }
+.chat-bubble__file { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; padding: 8px 10px; margin-bottom: 6px; border-radius: 12px; background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface); text-decoration: none; font-size: 13px; word-break: break-all; }
+.chat-bubble__file .material-icons { font-size: 20px; flex-shrink: 0; }
 .chat-bubble__image { display: block; max-width: min(260px, 62vw); max-height: 320px; width: 100%; border-radius: 12px; object-fit: cover; margin: 2px 0 6px; cursor: zoom_in; background: var(--md-sys-color-surface-container); }
 .chat-image-viewer { display: flex; align-items: center; justify-content: center; padding: 16px; }
 .chat-image-viewer img { max-width: 94%; max-height: 88%; border-radius: 12px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4); }
@@ -1686,6 +1688,7 @@ function renderMessagesHtml(chat) {
       <div class="chat-bubble">
         ${mine ? '' : `<div class="chat-bubble__sender">${escapeHtml(senderName)}</div>`}
         ${m.image ? `<img class="chat-bubble__image" src="${escapeHtml(m.image)}" alt="${escapeHtml(m.fileName || 'รูปภาพ')}" loading="lazy">` : ''}
+        ${m.file ? `<a class="chat-bubble__file" href="${escapeHtml(m.file)}" download="${escapeHtml(m.fileName || 'file')}"><span class="material-icons">description</span><span>${escapeHtml(m.fileName || 'ไฟล์')}</span></a>` : ''}
         ${m.text ? `<div class="chat-bubble__text">${escapeHtml(m.text)}</div>` : ''}
         <div class="chat-bubble__time">${fmtChatTime(m.createdAt)}</div>
       </div>
@@ -1733,6 +1736,18 @@ function createGroupChat(name, privacy, members) {
   openChatRoom(chat);
 }
 
+function leaveGroupChat() {
+  const chat = currentChat();
+  if (!chat || chat.type !== 'group' || !state.account) return;
+  if (!window.confirm('ออกจากกลุ่มนี้หรือไม่?')) return;
+  chat.members = (chat.members || []).filter((u) => u !== me());
+  if (!chat.members.length) state.chats = state.chats.filter((c) => c.id !== chat.id);
+  else if (chat.createdBy === me()) chat.createdBy = chat.members[0];
+  saveState();
+  currentChatId = null;
+  go('chat');
+}
+
 function toggleJoinGroup(id) {
   const chat = state.chats.find((c) => c.id === id);
   if (!chat || !state.account) return;
@@ -1763,24 +1778,31 @@ function sendChatMessage() {
   refreshChatRoom();
 }
 
-function sendChatImage(dataUrl, fileName) {
+function sendChatFile(dataUrl, fileName, fileType, isImage) {
   const chat = currentChat();
   if (!chat || !state.account || !dataUrl) return;
   const input = document.getElementById('chat-input');
   const caption = input ? input.value.trim() : '';
   if (!Array.isArray(chat.messages)) chat.messages = [];
-  chat.messages.push({
+  const msg = {
     id: 'msg-' + Date.now().toString(36),
     sender: me(),
     senderName: state.account.name || me(),
     text: caption,
-    image: dataUrl,
     fileName: fileName || '',
+    fileType: fileType || '',
     createdAt: new Date().toISOString()
-  });
+  };
+  if (isImage) msg.image = dataUrl;
+  else msg.file = dataUrl;
+  chat.messages.push(msg);
   if (input) { input.value = ''; input.style.height = ''; }
   saveState();
   refreshChatRoom();
+}
+
+function sendChatImage(dataUrl, fileName) {
+  sendChatFile(dataUrl, fileName, 'image', true);
 }
 
 function bindChatImages() {
@@ -1883,11 +1905,13 @@ function renderChatRoomHtml() {
     <div class="grow"></div>
     ${chat.type === 'group' ? `
     <button class="icon-button" id="chat-link-btn" aria-label="ลิ้งค์กลุ่ม"><span class="material-icons">link</span></button>
-    <button class="icon-button" id="chat-members-btn" aria-label="สมาชิก"><span class="material-icons">group</span></button>` : ''}
+    <button class="icon-button" id="chat-members-btn" aria-label="สมาชิก"><span class="material-icons">group</span></button>
+    <button class="icon-button" id="chat-leave-btn" aria-label="ออกจากกลุ่ม"><span class="material-icons">exit_to_app</span></button>` : ''}
   </div>
   <div class="chat-messages" id="chat-messages">${renderMessagesHtml(chat)}</div>
   <form class="chat-composer" id="chat-form">
     <label class="chat-attach" aria-label="แนบรูปภาพ" title="แนบรูปภาพ"><span class="material-icons">image</span><input type="file" id="chat-image-input" accept="image/*"></label>
+    <label class="chat-attach" aria-label="แนบไฟล์" title="แนบไฟล์"><span class="material-icons">attach_file</span><input type="file" id="chat-file-input"></label>
     <textarea id="chat-input" rows="1" placeholder="พิมพ์ข้อความ..." autocomplete="off"></textarea>
     <button type="submit" class="chat-send" aria-label="ส่งข้อความ"><span class="material-icons">send</span></button>
   </form>
@@ -2025,6 +2049,8 @@ function bindChatRoom() {
       window.prompt('ลิ้งค์กลุ่ม — กดก็อปปี้ได้เลย', link);
     }
   });
+  const leaveBtn = document.getElementById('chat-leave-btn');
+  if (leaveBtn) leaveBtn.addEventListener('click', leaveGroupChat);
   const membersBtn = document.getElementById('chat-members-btn');
   if (membersBtn) membersBtn.addEventListener('click', showChatMembersDialog);
   const imageInput = document.getElementById('chat-image-input');
@@ -2035,6 +2061,18 @@ function bindChatRoom() {
     chatImageToDataUrl(file).then((dataUrl) => {
       imageInput.value = '';
       if (dataUrl) sendChatImage(dataUrl, file.name);
+      setFlash('');
+    });
+  });
+  const fileInput = document.getElementById('chat-file-input');
+  if (fileInput) fileInput.addEventListener('change', () => {
+    const file = fileInput.files && fileInput.files[0];
+    fileInput.value = '';
+    if (!file) return;
+    if (file.size > 3 * 1024 * 1024) { setFlash('ไฟล์ใหญ่เกิน 3MB กรุณาใช้ไฟล์ที่เล็กกว่า'); return; }
+    setFlash('กำลังส่งไฟล์...');
+    fileToDataUrl(file).then((dataUrl) => {
+      if (dataUrl) sendChatFile(dataUrl, file.name, file.type, false);
       setFlash('');
     });
   });
@@ -2267,6 +2305,7 @@ function renderJobCardHtml(job) {
 
 function renderJobDetailHtml(job) {
   const status = statusOf(job);
+  const canDelete = !!state.account && job.postedBy === state.account.username;
   const postedBy = (state.account && job.postedByName) || job.postedBy || '';
   const jobFiles = Array.isArray(job.files) ? job.files : [];
   const jobLinks = Array.isArray(job.links) ? job.links : [];
@@ -2306,7 +2345,7 @@ function renderJobDetailHtml(job) {
     โพสต์โดย ${escapeHtml(postedBy)}
   </button>
   <button type="button" class="filled-tonal-button job-like-detail ${isLiked(job) ? 'is-liked' : ''}" id="job-like-btn" data-like="${escapeHtml(job.id)}" style="${isLiked(job) ? 'background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container);' : ''}"><span class="material-icons">favorite</span>${isLiked(job) ? 'เลิกถูกใจ' : 'ถูกใจ / บันทึก'}</button>
-  <button type="button" class="filled-tonal-button job-delete" id="job-delete" style="background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container);"><span class="material-icons">delete</span>ลบงาน</button>
+  ${canDelete ? `<button type="button" class="filled-tonal-button job-delete" id="job-delete" style="background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container);"><span class="material-icons">delete</span>ลบงาน</button>` : ''}
   <section class="card"><h2 class="card-heading t-title-large">งาน / เนื้อหางาน</h2><div class="card-body t-body-medium">${escapeHtml(job.content)}</div></section>
   ${job.answer ? `<section class="card"><h2 class="card-heading t-title-large">เฉลย / เกรงคำตอบ</h2><div class="card-body t-body-medium">${escapeHtml(job.answer)}</div></section>` : ''}
   ${images.length ? `<section class="card"><h2 class="card-heading t-title-large">รูปภาพ</h2><div class="job-gallery">${imagesHtml}</div></section>` : ''}
@@ -2527,6 +2566,8 @@ function bindJobDetail() {
   if (commentInput) commentInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendComment(); });
   const del = document.getElementById('job-delete');
   if (del) del.addEventListener('click', () => {
+    const job = state.jobs.find((j) => j.id === selectedJobId);
+    if (!job || !state.account || job.postedBy !== state.account.username) { setFlash('ลบได้เฉพาะงานของตัวเอง'); return; }
     if (!window.confirm('ลบงานนี้หรือไม่?')) return;
     state.jobs = state.jobs.filter((job) => job.id !== selectedJobId);
     saveState();
