@@ -477,7 +477,12 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
 .heart-pop { animation: heart-pop 400ms var(--md-sys-motion-spatial-fast); }
 @keyframes heart-pop { 0% { transform: scale(1); } 40% { transform: scale(1.35); } 70% { transform: scale(0.9); } 100% { transform: scale(1); } }
 .job-like-detail { align-self: flex-start; }
-.room-hint { font-size: 12px; color: var(--md-sys-color-on-surface-variant); margin: 0 0 4px; }
+.room-hint { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--md-sys-color-on-surface-variant); margin: 4px 0 0; }
+.room-hint .material-icons { font-size: 18px; }
+.room-section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 4px; }
+.room-section-head h2 { margin: 0; font-size: 20px; font-weight: 500; color: var(--md-sys-color-on-surface); }
+.room-followed { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.room-followed__label { font-size: 12px; color: var(--md-sys-color-on-surface-variant); }
 .room-follow { position: absolute; right: 10px; bottom: 10px; z-index: 2; color: var(--md-sys-color-on-primary-container); }
 .room-follow .material-icons { font-size: 20px; }
 .home-section-title { font-size: 13px; font-weight: 500; color: var(--md-sys-color-on-surface-variant); margin: 4px 0 8px; }
@@ -535,7 +540,8 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
   .login-form { max-width: 420px; }
 }
 @media (min-width: 1280px) {
-  .room-grid { grid-template-columns: repeat(6, 1fr); }
+  .room-grid { grid-template-columns: repeat(6, 1fr); gap: 16px; }
+  .room-card { width: 100%; max-width: 170px; justify-self: center; }
   .top-app-bar, .dash-subbar, .screen-main, .profile-page, .view-profile-page { max-width: 1040px; }
 }
 
@@ -1544,9 +1550,17 @@ ${filterMenus}
       <span class="room-card__label">${gradeNum}/${r}</span>
       ${isFollowed(selectedGrade, r) ? '<span class="room-follow" aria-hidden="true"><span class="material-icons">bookmark</span></span>' : ''}
     </button>`).join('');
+  const followedHere = state.followedRooms.filter((f) => f.grade === selectedGrade);
+  const followedChips = followedHere.map((f) => `<span class="home-chip">ห้อง ${escapeHtml(f.room)}</span>`).join('');
   return `${header}
 <main class="screen-main screen-main--nav">
-  <div class="room-hint">กดค้างการ์ดห้องแล้วเลื่อนซ้าย/ขวาเพื่อติดตามห้อง</div>
+  <div class="room-section-head">
+    <div class="room-section-head__text">
+      <h2 class="t-headline-large">เลือกห้อง</h2>
+      <p class="room-hint"><span class="material-icons">touch_app</span>กดการ์ดเพื่อดูงาน · กดค้างแล้วเลื่อนซ้าย/ขวาเพื่อติดตาม</p>
+    </div>
+    <div class="room-followed">${followedChips ? `<span class="room-followed__label">ติดตามอยู่</span>${followedChips}` : ''}</div>
+  </div>
   <div class="room-grid">${grid}</div>
 </main>
 ${gradeMenu}
