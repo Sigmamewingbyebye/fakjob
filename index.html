@@ -540,6 +540,8 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
 .chat-attach .material-icons { font-size: 22px; }
 .chat-attach input { display: none; }
 .chat-attach:active { transform: scale(0.92); }
+.chat-create-group { width: 100%; margin-top: 12px; }
+.chat-join-link-btn { margin: 0 0 4px; font-size: 13px; }
 .chat-bubble__image { display: block; max-width: min(260px, 62vw); max-height: 320px; width: 100%; border-radius: 12px; object-fit: cover; margin: 2px 0 6px; cursor: zoom_in; background: var(--md-sys-color-surface-container); }
 .chat-image-viewer { display: flex; align-items: center; justify-content: center; padding: 16px; }
 .chat-image-viewer img { max-width: 94%; max-height: 88%; border-radius: 12px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4); }
@@ -767,6 +769,7 @@ const state = { account: null, jobs: [], followedRooms: [], likedIds: [], chats:
 let screen = 'login';
 let selectedJobId = null;
 let currentChatId = null;
+let pendingJoin = '';
 let knownAccounts = [];
 let knownRows = [];
 let newChatPrivacy = 'public';
@@ -888,6 +891,7 @@ async function cloudPull() {
       const ownFresh = ownRow && fresh(ownRow);
       if (sharedFresh) state.jobs = Array.isArray(shared.payload.jobs) ? shared.payload.jobs : [];
       if (chatsRow && chatsRow.payload && Array.isArray(chatsRow.payload.chats)) state.chats = chatsRow.payload.chats;
+      if (pendingJoin) applyPendingJoin();
       knownRows = rows;
       knownAccounts = rows
         .filter((r) => r.payload && r.payload.account && r.payload.account.username)
@@ -910,6 +914,8 @@ async function cloudPull() {
         if (screen === 'login' || screen === 'signup') {
           navTab = 'home';
           screen = 'home';
+          render();
+          applyPendingJoin();
         }
       }
       if (!shared && ownRow && Array.isArray(ownRow.payload.jobs) && ownRow.payload.jobs.length) {
@@ -1217,6 +1223,7 @@ async function onLoginSubmit(e) {
   screen = 'home';
   saveState();
   render();
+  applyPendingJoin();
 }
 
 function renderSignupHtml() {
@@ -1273,6 +1280,7 @@ async function onSignupSubmit(e) {
   navTab = 'home';
   screen = 'home';
   render();
+  applyPendingJoin();
 }
 function navIconHtml(key, icon) {
   if (key === 'profile') {
@@ -1594,6 +1602,39 @@ function currentChat() {
   return state.chats.find((c) => c.id === currentChatId) || null;
 }
 
+function chatJoinLink(chat) {
+  return location.origin + location.pathname + '?join=' + encodeURIComponent(chat.id);
+}
+
+function applyPendingJoin() {
+  if (!pendingJoin || !state.account) return;
+  joinChatByLink(pendingJoin, true);
+}
+
+function joinChatByLink(value, fromPending) {
+  if (!state.account) { pendingJoin = value; setFlash('เข้าสู่ระบบก่อนเข้าร่วมกลุ่มครับ'); return false; }
+  let id = String(value || '').trim();
+  if (!id) return false;
+  const m = id.match(/[?&]join=([^&#]+)/);
+  if (m) id = decodeURIComponent(m[1]);
+  else if (/^https?:\/\//.test(id)) {
+    try { id = new URL(id).searchParams.get('join') || id; } catch (e) {}
+  }
+  const chat = state.chats.find((c) => c.id === id);
+  if (!chat) {
+    if (fromPending) { setFlash('กำลังโหลดข้อมูลกลุ่ม...'); }
+    else setFlash('ไม่พบกลุ่มนี้ ตรวจสอบลิ้งค์อีกครั้ง');
+    return false;
+  }
+  pendingJoin = '';
+  if (!Array.isArray(chat.members)) chat.members = [];
+  if (chat.members.indexOf(me()) === -1) chat.members.push(me());
+  saveState();
+  openChatRoom(chat);
+  setFlash('เข้าร่วมกลุ่มแล้ว');
+  return true;
+}
+
 function lastChatTime(chat) {
   const msgs = Array.isArray(chat.messages) ? chat.messages : [];
   if (msgs.length && msgs[msgs.length - 1].createdAt) return Date.parse(msgs[msgs.length - 1].createdAt) || 0;
@@ -1803,11 +1844,13 @@ function renderChatHtml() {
 <div class="top-app-bar">
   <h1 class="top-app-bar__title">แชท</h1>
 </div>
+<div class="flash" id="flash" aria-live="polite"></div>
 <main class="screen-main screen-main--nav chat-list-page">
   <div class="chat-list-search">
     <span class="material-icons">search</span>
     <input id="chat-search" type="search" placeholder="ค้นหาแชท" autocomplete="off">
   </div>
+  <button type="button" class="text-button chat-join-link-btn" id="chat-join-link-btn"><span class="material-icons">link</span>เข้าร่วมกลุ่มด้วยลิ้งค์</button>
   <section class="profile-section">
     <div class="profile-section__label">แชทของฉัน (${myChats.length})</div>
     <div id="chat-list">${myChats.length ? myChats.map((c) => row(c, false)).join('') : '<p class="empty-text">ยังไม่มีแชท — กดปุ่มมุมขวาเพื่อเริ่มสนทนา</p>'}</div>
@@ -1829,6 +1872,7 @@ function renderChatRoomHtml() {
     : `@${(chat.members || []).find((u) => u !== me()) || ''}`;
   return `
 <div class="chat-room">
+  <div class="flash" id="flash" aria-live="polite"></div>
   <div class="top-app-bar">
     <button class="icon-button" id="chat-back"><span class="material-icons">arrow_back</span></button>
     ${chatAvatarHtml(chat, 40)}
@@ -1837,7 +1881,9 @@ function renderChatRoomHtml() {
       <div class="chat-room__sub" id="chat-room-sub">${escapeHtml(sub)}</div>
     </div>
     <div class="grow"></div>
-    ${chat.type === 'group' ? `<button class="icon-button" id="chat-members-btn" aria-label="สมาชิก"><span class="material-icons">group</span></button>` : ''}
+    ${chat.type === 'group' ? `
+    <button class="icon-button" id="chat-link-btn" aria-label="ลิ้งค์กลุ่ม"><span class="material-icons">link</span></button>
+    <button class="icon-button" id="chat-members-btn" aria-label="สมาชิก"><span class="material-icons">group</span></button>` : ''}
   </div>
   <div class="chat-messages" id="chat-messages">${renderMessagesHtml(chat)}</div>
   <form class="chat-composer" id="chat-form">
@@ -1882,9 +1928,9 @@ function renderNewChatHtml() {
     <p class="chat-hint">${newChatPrivacy === 'public' ? 'ใครก็ได้ที่เห็นกลุ่มสามารถเข้าร่วมได้' : 'เฉพาะสมาชิกที่คุณเลือกเท่านั้นที่เห็นและเข้าร่วมได้'}</p>
     <div class="profile-section__label">เลือกสมาชิก</div>
     ${users.length ? `<div class="chat-member-list">${memberRows}</div>` : '<p class="empty-text">ยังไม่มีบัญชีอื่นในระบบ</p>'}
+    <button type="button" class="filled-button chat-create-group" id="group-create"><span class="material-icons">group_add</span>สร้างกลุ่ม</button>
   </section>
-</main>
-<button type="button" class="fab m3y-squircle chat-fab" id="group-create" aria-label="สร้างกลุ่ม"><span class="material-icons">add</span></button>`;
+</main>`;
 }
 
 function syncSelectedMembers() {
@@ -1931,6 +1977,11 @@ function bindChat() {
       it.hidden = !!q && it.textContent.toLowerCase().indexOf(q) === -1;
     });
   });
+  const joinLinkBtn = document.getElementById('chat-join-link-btn');
+  if (joinLinkBtn) joinLinkBtn.addEventListener('click', () => {
+    const value = window.prompt('วางลิ้งค์หรือรหัสกลุ่ม', '');
+    if (value) joinChatByLink(value);
+  });
   bindBottomNav();
 }
 
@@ -1961,6 +2012,19 @@ function bindChatRoom() {
     head.addEventListener('click', open);
     head.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
   }
+  const linkBtn = document.getElementById('chat-link-btn');
+  if (linkBtn) linkBtn.addEventListener('click', () => {
+    const chat = currentChat();
+    if (!chat) return;
+    const link = chatJoinLink(chat);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(link)
+        .then(() => setFlash('คัดลอกลิ้งค์กลุ่มแล้ว'))
+        .catch(() => window.prompt('ลิ้งค์กลุ่ม — กดก็อปปี้ได้เลย', link));
+    } else {
+      window.prompt('ลิ้งค์กลุ่ม — กดก็อปปี้ได้เลย', link);
+    }
+  });
   const membersBtn = document.getElementById('chat-members-btn');
   if (membersBtn) membersBtn.addEventListener('click', showChatMembersDialog);
   const imageInput = document.getElementById('chat-image-input');
@@ -3138,8 +3202,13 @@ function init() {
     else openProfileView(user, screen, name);
   });
   bindBottomNav();
+  try {
+    const join = new URLSearchParams(location.search).get('join');
+    if (join) pendingJoin = join;
+  } catch (e) {}
   screen = state.account ? 'home' : 'login';
   render();
+  applyPendingJoin();
   document.addEventListener('click', (e) => {
     const fabMenu = document.getElementById('fab-menu');
     if (fabMenu && !fabMenu.hidden && !fabMenu.contains(e.target) && !e.target.closest('#add-job-btn')) {
