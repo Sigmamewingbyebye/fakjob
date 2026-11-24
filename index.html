@@ -253,7 +253,8 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
              m3-rise var(--md-dur-spatial) var(--md-sys-motion-spatial-fast);
 }
 .nav-item {
-  min-width: 56px;
+  flex: 1 1 0;
+  min-width: 0;
   min-height: 52px;
   padding: 0;
   border: none;
@@ -267,9 +268,11 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
 .nav-item__pill {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 6px;
   height: 52px;
-  padding: 0 16px;
+  max-width: 100%;
+  padding: 0 10px;
   border-radius: var(--md-shape-full);
   color: var(--md-sys-color-on-surface-variant);
   /* spatial spring for the pill width (one axis); effects spring for color */
@@ -280,7 +283,7 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
   will-change: padding, transform;
 }
 .nav-item.active .nav-item__pill {
-  padding: 0 20px;
+  padding: 0 14px;
   background: var(--md-sys-color-secondary-container);
   color: var(--md-sys-color-on-secondary-container);
 }
@@ -289,7 +292,7 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
 .nav-item.active .nav-avatar { border-color: var(--md-sys-color-primary); }
 .nav-item.active .material-icons { font-variation-settings: 'FILL' 1; animation: m3-nav-icon var(--md-dur-smooth) var(--md-sys-motion-spatial-smooth); }
 @keyframes m3-nav-icon { from { transform: translateX(6px); } to { transform: translateX(0); } }
-.nav-item__label { font-size: 13px; font-weight: 500; white-space: nowrap; }
+.nav-item__label { font-size: 13px; font-weight: 500; white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .nav-item.active .nav-item__label {
   font-weight: 700;
   animation: m3-fade var(--md-dur-effects-slow) var(--md-sys-motion-effects-slow),
@@ -582,6 +585,12 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
   animation: m3-fade var(--md-dur-default) var(--md-sys-motion-effects-default),
              m3-rise var(--md-dur-spatial) var(--md-sys-motion-spatial-default);
 }
+/* 5 nav items: icon-only on phones so pills never overflow; labels return when there is room */
+@media (max-width: 599px) {
+  .nav-item__label { display: none; }
+  .nav-item.active .nav-item__pill { padding: 0 10px; }
+}
+
 /* ---- desktop / tablet layout ---- */
 @media (min-width: 768px) {
   .top-app-bar, .dash-subbar, .screen-main, .profile-page, .view-profile-page, .login-screen,
