@@ -64,9 +64,9 @@
   --md-shape-lg-inc: 20px;
   --md-shape-xl: 28px;
   --md-shape-full: 999px;
-  --md-sys-motion-spatial-smooth: cubic-bezier(0.27, 1.03, 0.18, 1.00);
-  --md-dur-smooth: 700ms;
-  --md-dur-effects-slow: 400ms;
+  --md-sys-motion-spatial-smooth: cubic-bezier(0.22, 1.00, 0.30, 1.00);
+  --md-dur-smooth: 900ms;
+  --md-dur-effects-slow: 500ms;
 }
 /* ---- M3 typography: baseline + emphasized ---- */
 .t-display-large { font-size: 24px; font-weight: 400; line-height: 30px; }
@@ -248,7 +248,7 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
   border-radius: var(--md-shape-xl);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
   touch-action: pan-y;
-  transition: transform 300ms var(--md-sys-motion-spatial-smooth);
+  transition: transform 600ms var(--md-sys-motion-spatial-smooth);
   animation: m3-fade var(--md-dur-default) var(--md-sys-motion-effects-default),
              m3-rise var(--md-dur-spatial) var(--md-sys-motion-spatial-fast);
 }
