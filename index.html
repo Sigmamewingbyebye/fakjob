@@ -516,6 +516,29 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
   animation: m3-fade var(--md-dur-default) var(--md-sys-motion-effects-default),
              m3-rise var(--md-dur-spatial) var(--md-sys-motion-spatial-default);
 }
+/* ---- desktop / tablet layout ---- */
+@media (min-width: 768px) {
+  .top-app-bar, .dash-subbar, .screen-main, .profile-page, .view-profile-page, .login-screen {
+    max-width: 880px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .top-app-bar { border-radius: 0 0 20px 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); }
+  .nav-bar { left: 0; right: 0; width: min(560px, 100%); margin: 0 auto; }
+  .room-grid { grid-template-columns: repeat(4, 1fr); }
+  .job-form, .detail-main, #home-jobs, #liked-jobs, #history-list, #jobs-list, #view-jobs {
+    max-width: 760px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .job-card, .form-section, .card { max-width: 760px; margin-left: auto; margin-right: auto; }
+  .login-form { max-width: 420px; }
+}
+@media (min-width: 1280px) {
+  .room-grid { grid-template-columns: repeat(6, 1fr); }
+  .top-app-bar, .dash-subbar, .screen-main, .profile-page, .view-profile-page { max-width: 1040px; }
+}
+
 /* Reduce motion — my design decision; M3 has no official scheme-swap rule */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
