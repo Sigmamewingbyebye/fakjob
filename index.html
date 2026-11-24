@@ -536,6 +536,13 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
 .chat-composer textarea:focus { border-color: var(--md-sys-color-primary); }
 .chat-send { width: 44px; height: 44px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); cursor: pointer; }
 .chat-send:active { transform: scale(0.92); }
+.chat-attach { width: 44px; height: 44px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); cursor: pointer; }
+.chat-attach .material-icons { font-size: 22px; }
+.chat-attach input { display: none; }
+.chat-attach:active { transform: scale(0.92); }
+.chat-bubble__image { display: block; max-width: min(260px, 62vw); max-height: 320px; width: 100%; border-radius: 12px; object-fit: cover; margin: 2px 0 6px; cursor: zoom_in; background: var(--md-sys-color-surface-container); }
+.chat-image-viewer { display: flex; align-items: center; justify-content: center; padding: 16px; }
+.chat-image-viewer img { max-width: 94%; max-height: 88%; border-radius: 12px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4); }
 .chat-user-list, .chat-member-list { display: flex; flex-direction: column; gap: 6px; }
 .chat-user-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border: 0; border-radius: var(--md-shape-md); background: var(--md-sys-color-surface-container-low); color: var(--md-sys-color-on-surface); text-align: left; font: inherit; cursor: pointer; }
 .chat-user-row__name, .chat-user-row__sub { display: block; }
@@ -1116,6 +1123,33 @@ function fileToDataUrl(file) {
     reader.readAsDataURL(file);
   });
 }
+
+/* บีบรูปก่อนส่งแชท เพื่อไม่ให้ข้อมูลใน Firebase ใหญ่เกินไป */
+function chatImageToDataUrl(file, maxSize, quality) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const max = maxSize || 1280;
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        const type = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+        resolve(canvas.toDataURL(type, quality || 0.82));
+      };
+      img.onerror = () => resolve(reader.result || '');
+      img.src = reader.result;
+    };
+    reader.onerror = () => resolve('');
+    reader.readAsDataURL(file);
+  });
+}
 function renderLoginHtml() {
   return `
 <main class="login-screen">
@@ -1610,7 +1644,8 @@ function renderMessagesHtml(chat) {
       ${avatar}
       <div class="chat-bubble">
         ${mine ? '' : `<div class="chat-bubble__sender">${escapeHtml(senderName)}</div>`}
-        <div class="chat-bubble__text">${escapeHtml(m.text)}</div>
+        ${m.image ? `<img class="chat-bubble__image" src="${escapeHtml(m.image)}" alt="${escapeHtml(m.fileName || 'รูปภาพ')}" loading="lazy">` : ''}
+        ${m.text ? `<div class="chat-bubble__text">${escapeHtml(m.text)}</div>` : ''}
         <div class="chat-bubble__time">${fmtChatTime(m.createdAt)}</div>
       </div>
     </div>`;
@@ -1687,6 +1722,38 @@ function sendChatMessage() {
   refreshChatRoom();
 }
 
+function sendChatImage(dataUrl, fileName) {
+  const chat = currentChat();
+  if (!chat || !state.account || !dataUrl) return;
+  const input = document.getElementById('chat-input');
+  const caption = input ? input.value.trim() : '';
+  if (!Array.isArray(chat.messages)) chat.messages = [];
+  chat.messages.push({
+    id: 'msg-' + Date.now().toString(36),
+    sender: me(),
+    senderName: state.account.name || me(),
+    text: caption,
+    image: dataUrl,
+    fileName: fileName || '',
+    createdAt: new Date().toISOString()
+  });
+  if (input) { input.value = ''; input.style.height = ''; }
+  saveState();
+  refreshChatRoom();
+}
+
+function bindChatImages() {
+  document.querySelectorAll('.chat-bubble__image').forEach((img) => {
+    img.addEventListener('click', () => {
+      const wrap = document.createElement('div');
+      wrap.className = 'poster-scrim chat-image-viewer';
+      wrap.innerHTML = `<img src="${img.src}" alt="รูปภาพ">`;
+      document.body.appendChild(wrap);
+      wrap.addEventListener('click', () => wrap.remove());
+    });
+  });
+}
+
 function refreshChatRoom() {
   const chat = currentChat();
   if (!chat) { render({ noAnim: true }); return; }
@@ -1694,6 +1761,7 @@ function refreshChatRoom() {
   if (box) {
     box.innerHTML = renderMessagesHtml(chat);
     box.scrollTop = box.scrollHeight;
+    bindChatImages();
   }
   const title = document.getElementById('chat-room-title');
   if (title) title.textContent = chatTitle(chat);
@@ -1773,6 +1841,7 @@ function renderChatRoomHtml() {
   </div>
   <div class="chat-messages" id="chat-messages">${renderMessagesHtml(chat)}</div>
   <form class="chat-composer" id="chat-form">
+    <label class="chat-attach" aria-label="แนบรูปภาพ" title="แนบรูปภาพ"><span class="material-icons">image</span><input type="file" id="chat-image-input" accept="image/*"></label>
     <textarea id="chat-input" rows="1" placeholder="พิมพ์ข้อความ..." autocomplete="off"></textarea>
     <button type="submit" class="chat-send" aria-label="ส่งข้อความ"><span class="material-icons">send</span></button>
   </form>
@@ -1894,8 +1963,19 @@ function bindChatRoom() {
   }
   const membersBtn = document.getElementById('chat-members-btn');
   if (membersBtn) membersBtn.addEventListener('click', showChatMembersDialog);
+  const imageInput = document.getElementById('chat-image-input');
+  if (imageInput) imageInput.addEventListener('change', () => {
+    const file = imageInput.files && imageInput.files[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    setFlash('กำลังส่งรูปภาพ...');
+    chatImageToDataUrl(file).then((dataUrl) => {
+      imageInput.value = '';
+      if (dataUrl) sendChatImage(dataUrl, file.name);
+      setFlash('');
+    });
+  });
   const box = document.getElementById('chat-messages');
-  if (box) box.scrollTop = box.scrollHeight;
+  if (box) { box.scrollTop = box.scrollHeight; bindChatImages(); }
 }
 
 function bindNewChat() {
