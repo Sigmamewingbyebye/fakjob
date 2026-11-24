@@ -518,6 +518,7 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
 .chat-room { display: flex; flex-direction: column; height: 100dvh; }
 .chat-room .top-app-bar { gap: 10px; flex-shrink: 0; }
 .chat-room__head { display: flex; flex-direction: column; min-width: 0; }
+.chat-room__head--link { cursor: pointer; }
 .chat-room__title { font-size: 16px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chat-room__sub { font-size: 11px; color: var(--md-sys-color-on-surface-variant); }
 .chat-messages { flex: 1; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 10px; padding: 14px 16px 20px; }
@@ -1458,6 +1459,7 @@ function openPoster(jobId) {
   document.getElementById('poster-dlg-name').textContent = job.postedByName || job.postedBy || 'ไม่ระบุ';
   document.getElementById('poster-dlg-user').textContent = '@' + (job.postedBy || '');
   dlg.dataset.user = job.postedBy || '';
+  dlg.dataset.name = job.postedByName || '';
   dlg.hidden = false;
 }
 
@@ -1471,45 +1473,54 @@ async function openProfileByName(name, from) {
   if (state.account && state.account.name === name) openProfileView(state.account.username, from);
 }
 
-async function openProfileView(username, from) {
-  if (!username) return;
+async function openProfileView(username, from, name) {
+  const wanted = username || '';
+  if (!wanted && !name) return false;
   viewFrom = from || screen;
   try {
     const rows = await sbRequest('fakjob_state?select=id,payload');
-    const own = rows.find((r) => r.id === username);
+    const accByName = (r) => r.payload && r.payload.account;
+    let own = rows.find((r) => r.id === wanted);
+    if (!own && wanted) own = rows.find((r) => accByName(r) && r.payload.account.username === wanted);
+    if (!own && name) own = rows.find((r) => accByName(r) && r.payload.account.name === name);
     const shared = rows.find((r) => r.id === 'jobs');
-    if (own && own.payload && own.payload.account) {
+    if (own && accByName(own)) {
       viewProfile = {
         account: own.payload.account,
         followedRooms: Array.isArray(own.payload.followedRooms) ? own.payload.followedRooms : [],
-        jobs: (Array.isArray(shared?.payload?.jobs) ? shared.payload.jobs : []).filter((j) => j.postedBy === username)
+        jobs: (Array.isArray(shared?.payload?.jobs) ? shared.payload.jobs : []).filter((j) => j.postedBy === own.payload.account.username)
       };
       go('viewProfile');
-      return;
+      return true;
     }
   } catch (e) { /* ใช้ข้อมูลในเครื่อง */ }
 
-  const localJob = state.jobs.find((j) => j.postedBy === username);
+  const localJob = state.jobs.find((j) => wanted && j.postedBy === wanted)
+    || (name ? state.jobs.find((j) => j.postedByName === name) : null);
   if (localJob) {
+    const user = wanted || localJob.postedBy;
     viewProfile = {
       account: {
-        username,
-        name: localJob.postedByName || username,
-        profilePic: localJob.postedByPic || '',
+        username: user,
+        name: localJob.postedByName || name || user,
+        profilePic: localJob.postedByPic || (accountFor(user) && accountFor(user).profilePic) || '',
         profilePicCrop: { zoom: 1, x: 0, y: 0 },
-        profileBanner: ''
+        profileBanner: (accountFor(user) && accountFor(user).profileBanner) || ''
       },
-      followedRooms: state.account && state.account.username === username ? state.followedRooms : [],
-      jobs: state.jobs.filter((j) => j.postedBy === username)
+      followedRooms: state.account && state.account.username === user ? state.followedRooms : [],
+      jobs: state.jobs.filter((j) => j.postedBy === user)
     };
     go('viewProfile');
-    return;
+    return true;
   }
 
-  if (state.account && state.account.username === username) {
-    viewProfile = { account: state.account, followedRooms: state.followedRooms, jobs: state.jobs.filter((j) => j.postedBy === username) };
+  const ownAcc = state.account && (state.account.username === wanted || (name && state.account.name === name)) ? state.account : null;
+  if (ownAcc) {
+    viewProfile = { account: ownAcc, followedRooms: state.followedRooms, jobs: state.jobs.filter((j) => j.postedBy === ownAcc.username) };
     go('viewProfile');
+    return true;
   }
+  return false;
 }
 
 /* ---- chat helpers ---- */
@@ -1730,7 +1741,7 @@ function renderChatRoomHtml() {
   <div class="top-app-bar">
     <button class="icon-button" id="chat-back"><span class="material-icons">arrow_back</span></button>
     ${chatAvatarHtml(chat, 40)}
-    <div class="chat-room__head">
+    <div class="chat-room__head ${chat.type === 'direct' ? 'chat-room__head--link' : ''}" ${chat.type === 'direct' ? 'id="chat-head" role="button" tabindex="0" aria-label="ดูโปรไฟล์"' : ''}>
       <div class="chat-room__title" id="chat-room-title">${escapeHtml(chatTitle(chat))}</div>
       <div class="chat-room__sub" id="chat-room-sub">${escapeHtml(sub)}</div>
     </div>
@@ -1846,6 +1857,18 @@ function bindChatRoom() {
       input.style.height = Math.min(input.scrollHeight, 120) + 'px';
     });
   }
+  const head = document.getElementById('chat-head');
+  if (head) {
+    const open = () => {
+      const chat = currentChat();
+      if (!chat || chat.type !== 'direct') return;
+      const other = (chat.members || []).find((u) => u !== me());
+      const acc = accountFor(other);
+      openProfileView(other, 'chatRoom', acc && acc.name);
+    };
+    head.addEventListener('click', open);
+    head.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+  }
   const membersBtn = document.getElementById('chat-members-btn');
   if (membersBtn) membersBtn.addEventListener('click', showChatMembersDialog);
   const box = document.getElementById('chat-messages');
@@ -1912,7 +1935,7 @@ function bindHome() {
     if (poster) poster.addEventListener('click', (e) => {
       e.stopPropagation();
       const job = state.jobs.find((j) => j.id === (poster.dataset.posterJob || card.dataset.jobId));
-      if (job) openProfileView(job.postedBy, screen);
+      if (job) openProfileView(job.postedBy, screen, job.postedByName);
     });
   });
   bindBottomNav();
@@ -1965,7 +1988,7 @@ function bindHistory() {
     if (poster) poster.addEventListener('click', (e) => {
       e.stopPropagation();
       const job = state.jobs.find((j) => j.id === (poster.dataset.posterJob || card.dataset.jobId));
-      if (job) openProfileView(job.postedBy, screen);
+      if (job) openProfileView(job.postedBy, screen, job.postedByName);
     });
   });
   bindFilterChips();
@@ -2268,7 +2291,7 @@ function bindDashboard() {
     if (poster) poster.addEventListener('click', (e) => {
       e.stopPropagation();
       const job = state.jobs.find((j) => j.id === (poster.dataset.posterJob || card.dataset.jobId));
-      if (job) openProfileView(job.postedBy, screen);
+      if (job) openProfileView(job.postedBy, screen, job.postedByName);
     });
   });
 
@@ -2298,7 +2321,7 @@ function bindJobDetail() {
   const posterDetail = document.getElementById('poster-detail');
   if (posterDetail) posterDetail.addEventListener('click', () => {
     const job = state.jobs.find((j) => j.id === selectedJobId);
-    if (job) openProfileView(job.postedBy, 'jobDetail');
+    if (job) openProfileView(job.postedBy, 'jobDetail', job.postedByName);
   });
 
   const commentInput = document.getElementById('comment-input');
@@ -2323,14 +2346,15 @@ function bindJobDetail() {
   }
   if (commentSend) commentSend.addEventListener('click', sendComment);
   document.querySelectorAll('.comment-author').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
+      const name = btn.dataset.commentName;
       let user = btn.dataset.commentUser;
       if (!user) {
-        const job = state.jobs.find((j) => j.postedByName === btn.dataset.commentName);
+        const job = state.jobs.find((j) => j.postedByName === name);
         user = job ? job.postedBy : '';
       }
-      if (user) openProfileView(user, 'jobDetail');
-      else openProfileByName(btn.dataset.commentName, 'jobDetail');
+      const ok = await openProfileView(user, 'jobDetail', name);
+      if (!ok) openProfileByName(name, 'jobDetail');
     });
   });
   if (commentInput) commentInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendComment(); });
@@ -3006,8 +3030,9 @@ function init() {
   document.getElementById('poster-dlg-open').addEventListener('click', () => {
     posterDlg.hidden = true;
     const user = posterDlg.dataset.user;
+    const name = posterDlg.dataset.name;
     if (user && user === me()) go('profile');
-    else openProfileView(user, screen);
+    else openProfileView(user, screen, name);
   });
   bindBottomNav();
   screen = state.account ? 'home' : 'login';
