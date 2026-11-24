@@ -235,15 +235,15 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
 /* ---- bottom navigation (M3 Expressive: selected item shows label) ---- */
 .nav-bar {
   position: fixed;
-  left: 16px;
-  right: 16px;
+  left: 8px;
+  right: 8px;
   bottom: 12px;
   z-index: 15;
   display: flex;
   align-items: center;
   justify-content: space-around;
   height: 68px;
-  padding: 6px 10px;
+  padding: 6px 6px;
   background: var(--md-sys-color-surface-container);
   border-radius: var(--md-shape-xl);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
@@ -253,8 +253,8 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
              m3-rise var(--md-dur-spatial) var(--md-sys-motion-spatial-fast);
 }
 .nav-item {
-  flex: 1 1 0;
-  min-width: 0;
+  flex: 0 1 auto;
+  min-width: 46px;
   min-height: 52px;
   padding: 0;
   border: none;
@@ -269,10 +269,10 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 5px;
   height: 52px;
   max-width: 100%;
-  padding: 0 10px;
+  padding: 0 8px;
   border-radius: var(--md-shape-full);
   color: var(--md-sys-color-on-surface-variant);
   /* spatial spring for the pill width (one axis); effects spring for color */
@@ -283,7 +283,7 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
   will-change: padding, transform;
 }
 .nav-item.active .nav-item__pill {
-  padding: 0 14px;
+  padding: 0 12px;
   background: var(--md-sys-color-secondary-container);
   color: var(--md-sys-color-on-secondary-container);
 }
@@ -292,7 +292,7 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
 .nav-item.active .nav-avatar { border-color: var(--md-sys-color-primary); }
 .nav-item.active .material-icons { font-variation-settings: 'FILL' 1; animation: m3-nav-icon var(--md-dur-smooth) var(--md-sys-motion-spatial-smooth); }
 @keyframes m3-nav-icon { from { transform: translateX(6px); } to { transform: translateX(0); } }
-.nav-item__label { font-size: 13px; font-weight: 500; white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.nav-item__label { font-size: 12px; font-weight: 500; white-space: nowrap; min-width: 0; max-width: 96px; overflow: hidden; text-overflow: ellipsis; }
 .nav-item.active .nav-item__label {
   font-weight: 700;
   animation: m3-fade var(--md-dur-effects-slow) var(--md-sys-motion-effects-slow),
@@ -585,12 +585,6 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
   animation: m3-fade var(--md-dur-default) var(--md-sys-motion-effects-default),
              m3-rise var(--md-dur-spatial) var(--md-sys-motion-spatial-default);
 }
-/* 5 nav items: icon-only on phones so pills never overflow; labels return when there is room */
-@media (max-width: 599px) {
-  .nav-item__label { display: none; }
-  .nav-item.active .nav-item__pill { padding: 0 10px; }
-}
-
 /* ---- desktop / tablet layout ---- */
 @media (min-width: 768px) {
   .top-app-bar, .dash-subbar, .screen-main, .profile-page, .view-profile-page, .login-screen,
