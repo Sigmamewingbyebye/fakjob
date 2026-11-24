@@ -548,7 +548,6 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
 .chat-hint { font-size: 12px; color: var(--md-sys-color-on-surface-variant); margin: 0 0 8px; }
 .chat-member-pick { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--md-shape-md); background: var(--md-sys-color-surface-container-low); font-size: 14px; cursor: pointer; }
 .chat-member-pick input { width: 18px; height: 18px; accent-color: var(--md-sys-color-primary); }
-.chat-create-group { width: 100%; margin-top: 12px; }
 .chat-member-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 14px; }
 
 /* ---- motion: screen enter + menu reveal (spatial for geometry, effects for opacity) ---- */
@@ -1735,8 +1734,6 @@ function renderChatHtml() {
   return `
 <div class="top-app-bar">
   <h1 class="top-app-bar__title">แชท</h1>
-  <div class="grow"></div>
-  <button type="button" class="icon-button" id="new-chat-btn" aria-label="แชทใหม่"><span class="material-icons">edit_square</span></button>
 </div>
 <main class="screen-main screen-main--nav chat-list-page">
   <div class="chat-list-search">
@@ -1752,7 +1749,8 @@ function renderChatHtml() {
     <div class="profile-section__label">กลุ่มสาธารณะ</div>
     <div id="public-chat-list">${publicGroups.map((c) => row(c, true)).join('')}</div>
   </section>` : ''}
-</main>`;
+</main>
+<button class="fab m3y-squircle chat-fab" id="chat-new-fab" aria-label="แชท / สร้างกลุ่มใหม่"><span class="material-icons">add</span></button>`;
 }
 
 function renderChatRoomHtml() {
@@ -1815,9 +1813,9 @@ function renderNewChatHtml() {
     <p class="chat-hint">${newChatPrivacy === 'public' ? 'ใครก็ได้ที่เห็นกลุ่มสามารถเข้าร่วมได้' : 'เฉพาะสมาชิกที่คุณเลือกเท่านั้นที่เห็นและเข้าร่วมได้'}</p>
     <div class="profile-section__label">เลือกสมาชิก</div>
     ${users.length ? `<div class="chat-member-list">${memberRows}</div>` : '<p class="empty-text">ยังไม่มีบัญชีอื่นในระบบ</p>'}
-    <button type="button" class="filled-button chat-create-group" id="group-create"><span class="material-icons">group_add</span>สร้างกลุ่ม</button>
   </section>
-</main>`;
+</main>
+<button type="button" class="fab m3y-squircle chat-fab" id="group-create" aria-label="สร้างกลุ่ม"><span class="material-icons">add</span></button>`;
 }
 
 function syncSelectedMembers() {
@@ -1839,7 +1837,7 @@ function showChatMembersDialog() {
 }
 
 function bindChat() {
-  const newBtn = document.getElementById('new-chat-btn');
+  const newBtn = document.getElementById('chat-new-fab') || document.getElementById('new-chat-btn');
   if (newBtn) newBtn.addEventListener('click', () => {
     groupNameDraft = '';
     selectedMembers = [];
