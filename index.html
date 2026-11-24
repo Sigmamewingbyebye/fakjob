@@ -762,6 +762,7 @@ let screen = 'login';
 let selectedJobId = null;
 let currentChatId = null;
 let knownAccounts = [];
+let knownRows = [];
 let newChatPrivacy = 'public';
 let groupNameDraft = '';
 let selectedMembers = [];
@@ -881,6 +882,7 @@ async function cloudPull() {
       const ownFresh = ownRow && fresh(ownRow);
       if (sharedFresh) state.jobs = Array.isArray(shared.payload.jobs) ? shared.payload.jobs : [];
       if (chatsRow && chatsRow.payload && Array.isArray(chatsRow.payload.chats)) state.chats = chatsRow.payload.chats;
+      knownRows = rows;
       knownAccounts = rows
         .filter((r) => r.payload && r.payload.account && r.payload.account.username)
         .map((r) => r.payload.account);
@@ -913,7 +915,7 @@ async function cloudPull() {
       }));
       syncState = 'on';
       const safeScreen = screen === 'dashboard' || screen === 'home' || screen === 'history'
-        || screen === 'profile' || screen === 'chat' || screen === 'newChat';
+        || screen === 'profile' || screen === 'viewProfile' || screen === 'chat' || screen === 'newChat';
       const focus = document.activeElement;
       const typing = focus && (focus.tagName === 'INPUT' || focus.tagName === 'TEXTAREA');
       const changed = before !== JSON.stringify({ a: state.account, j: state.jobs, f: state.followedRooms, l: state.likedIds, c: state.chats });
@@ -1463,49 +1465,70 @@ function openPoster(jobId) {
   dlg.hidden = false;
 }
 
-async function openProfileByName(name, from) {
-  if (!name) return;
-  try {
-    const rows = await sbRequest('fakjob_state?select=id,payload');
-    const found = rows.find((r) => r.payload && r.payload.account && r.payload.account.name === name);
-    if (found) { openProfileView(found.id, from); return; }
-  } catch (e) { /* ใช้ข้อมูลในเครื่อง */ }
-  if (state.account && state.account.name === name) openProfileView(state.account.username, from);
+function openProfileByName(name, from) {
+  if (!name) return false;
+  return openProfileView('', from, name);
 }
 
-async function openProfileView(username, from, name) {
+function findProfileRow(wanted, name) {
+  if (!knownRows.length) return null;
+  const hasAcc = (r) => r.payload && r.payload.account;
+  let row = wanted ? knownRows.find((r) => r.id === wanted) : null;
+  if (!row && wanted) row = knownRows.find((r) => hasAcc(r) && r.payload.account.username === wanted);
+  if (!row && name) row = knownRows.find((r) => hasAcc(r) && r.payload.account.name === name);
+  return row;
+}
+
+function setViewProfile(row) {
+  const acc = row.payload.account;
+  viewProfile = {
+    account: acc,
+    followedRooms: Array.isArray(row.payload.followedRooms) ? row.payload.followedRooms : [],
+    jobs: state.jobs.filter((j) => j.postedBy === acc.username)
+  };
+}
+
+async function fetchProfileRow(username, from) {
+  if (!username) return;
+  try {
+    const res = await fetch(FB_URL + '/' + encodeURIComponent(username) + '.json');
+    if (!res.ok) return;
+    const payload = await res.json();
+    if (!payload || typeof payload !== 'object' || !payload.account) return;
+    const row = { id: username, payload };
+    knownRows = knownRows.filter((r) => r.id !== username).concat(row);
+    if (!knownAccounts.some((a) => a.username === username)) knownAccounts.push(payload.account);
+    viewFrom = from || screen;
+    setViewProfile(row);
+    go('viewProfile');
+  } catch (e) { /* ออฟไลน์ */ }
+}
+
+/* เปิดทันทีจากข้อมูลที่โหลดไว้แล้ว ไม่ต้องโหลดฐานข้อมูลทั้งหมด */
+function openProfileView(username, from, name) {
   const wanted = username || '';
   if (!wanted && !name) return false;
   viewFrom = from || screen;
-  try {
-    const rows = await sbRequest('fakjob_state?select=id,payload');
-    const accByName = (r) => r.payload && r.payload.account;
-    let own = rows.find((r) => r.id === wanted);
-    if (!own && wanted) own = rows.find((r) => accByName(r) && r.payload.account.username === wanted);
-    if (!own && name) own = rows.find((r) => accByName(r) && r.payload.account.name === name);
-    const shared = rows.find((r) => r.id === 'jobs');
-    if (own && accByName(own)) {
-      viewProfile = {
-        account: own.payload.account,
-        followedRooms: Array.isArray(own.payload.followedRooms) ? own.payload.followedRooms : [],
-        jobs: (Array.isArray(shared?.payload?.jobs) ? shared.payload.jobs : []).filter((j) => j.postedBy === own.payload.account.username)
-      };
-      go('viewProfile');
-      return true;
-    }
-  } catch (e) { /* ใช้ข้อมูลในเครื่อง */ }
+
+  const row = findProfileRow(wanted, name);
+  if (row && row.payload && row.payload.account) {
+    setViewProfile(row);
+    go('viewProfile');
+    return true;
+  }
 
   const localJob = state.jobs.find((j) => wanted && j.postedBy === wanted)
     || (name ? state.jobs.find((j) => j.postedByName === name) : null);
   if (localJob) {
     const user = wanted || localJob.postedBy;
+    const acc = accountFor(user);
     viewProfile = {
       account: {
         username: user,
-        name: localJob.postedByName || name || user,
-        profilePic: localJob.postedByPic || (accountFor(user) && accountFor(user).profilePic) || '',
+        name: localJob.postedByName || name || (acc && acc.name) || user,
+        profilePic: localJob.postedByPic || (acc && acc.profilePic) || '',
         profilePicCrop: { zoom: 1, x: 0, y: 0 },
-        profileBanner: (accountFor(user) && accountFor(user).profileBanner) || ''
+        profileBanner: (acc && acc.profileBanner) || ''
       },
       followedRooms: state.account && state.account.username === user ? state.followedRooms : [],
       jobs: state.jobs.filter((j) => j.postedBy === user)
@@ -1520,6 +1543,8 @@ async function openProfileView(username, from, name) {
     go('viewProfile');
     return true;
   }
+
+  if (wanted) fetchProfileRow(wanted, viewFrom);
   return false;
 }
 
