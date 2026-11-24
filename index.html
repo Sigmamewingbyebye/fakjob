@@ -486,6 +486,12 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
 .room-follow { position: absolute; right: 10px; bottom: 10px; z-index: 2; color: var(--md-sys-color-on-primary-container); }
 .room-follow .material-icons { font-size: 20px; }
 .home-section-title { font-size: 13px; font-weight: 500; color: var(--md-sys-color-on-surface-variant); margin: 4px 0 8px; }
+.stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.stat-card { display: flex; flex-direction: column; gap: 4px; padding: 14px; border-radius: var(--md-shape-xl); background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+.stat-card__num { font-size: 24px; font-weight: 700; line-height: 28px; }
+.stat-card__num--small { font-size: 13px; font-weight: 500; line-height: 28px; }
+.stat-card__label { font-size: 11px; opacity: 0.85; }
+.home-layout { display: flex; flex-direction: column; gap: 12px; }
 .home-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .home-chip { display: inline-flex; align-items: center; padding: 6px 12px; border-radius: var(--md-shape-full); background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); font-size: 12px; font-weight: 500; }
 
@@ -538,6 +544,12 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
   }
   .job-card, .form-section, .card { max-width: 760px; margin-left: auto; margin-right: auto; }
   .login-form { max-width: 420px; }
+  .home-layout { display: grid; grid-template-columns: 280px 1fr; grid-template-areas: "followed jobs" "liked jobs"; gap: 16px; align-items: start; }
+  .home-followed { grid-area: followed; }
+  .home-jobs { grid-area: jobs; }
+  .home-liked { grid-area: liked; }
+  #history-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  #history-list .job-card { max-width: none; margin: 0; }
 }
 @media (min-width: 1280px) {
   .room-grid { grid-template-columns: repeat(6, 1fr); gap: 16px; }
@@ -1324,12 +1336,25 @@ function renderHomeHtml() {
   <button type="button" class="filter-chip" id="home-subject-chip">${homeSubjectFilter || 'วิชา'} <span class="material-icons">expand_more</span></button>
 </div>
 <main class="screen-main screen-main--nav">
-  <div class="home-section-title">ห้องที่ติดตาม</div>
-  <div class="home-chips">${chips || '<p class="empty-text">ยังไม่ได้ติดตามห้อง — กดค้างการ์ดห้องแล้วเลื่อนซ้าย/ขวาในแท็บฝากงาน</p>'}</div>
-  <div class="home-section-title">งานจากห้องที่ติดตาม</div>
-  <div id="home-jobs">${inRooms.length ? inRooms.map((job) => renderJobCardHtml(job)).join('') : '<p class="empty-text">ยังไม่มีงานจากห้องที่ติดตาม</p>'}</div>
-  <div class="home-section-title">งานที่ถูกใจ</div>
-  <div id="liked-jobs">${liked.length ? liked.map((job) => renderJobCardHtml(job)).join('') : '<p class="empty-text">ยังไม่มีงานที่ถูกใจ</p>'}</div>
+  <div class="stat-row">
+    <div class="stat-card"><span class="stat-card__num">${followed.length}</span><span class="stat-card__label">ห้องที่ติดตาม</span></div>
+    <div class="stat-card"><span class="stat-card__num">${inRooms.length}</span><span class="stat-card__label">งานในห้อง</span></div>
+    <div class="stat-card"><span class="stat-card__num">${liked.length}</span><span class="stat-card__label">งานที่ถูกใจ</span></div>
+  </div>
+  <div class="home-layout">
+    <section class="profile-section home-followed">
+      <div class="home-section-title">ห้องที่ติดตาม</div>
+      <div class="home-chips">${chips || '<p class="empty-text">ยังไม่ได้ติดตามห้อง — กดค้างการ์ดห้องแล้วเลื่อนซ้าย/ขวาในแท็บฝากงาน</p>'}</div>
+    </section>
+    <section class="profile-section home-jobs">
+      <div class="home-section-title">งานจากห้องที่ติดตาม</div>
+      <div id="home-jobs">${inRooms.length ? inRooms.map((job) => renderJobCardHtml(job)).join('') : '<p class="empty-text">ยังไม่มีงานจากห้องที่ติดตาม</p>'}</div>
+    </section>
+    <section class="profile-section home-liked">
+      <div class="home-section-title">งานที่ถูกใจ</div>
+      <div id="liked-jobs">${liked.length ? liked.map((job) => renderJobCardHtml(job)).join('') : '<p class="empty-text">ยังไม่มีงานที่ถูกใจ</p>'}</div>
+    </section>
+  </div>
 </main>
 ${typeMenu}
 ${subjectMenu}`;
@@ -1452,6 +1477,8 @@ function renderHistoryHtml() {
   const list = jobs.length
     ? jobs.map((job) => renderJobCardHtml(job)).join('')
     : '<p class="empty-text">ยังไม่มีประวัติงาน</p>';
+  const subjectCount = new Set(jobs.map((j) => j.subjectOther || j.subject).filter(Boolean)).size;
+  const latest = jobs.length && jobs[0].createdAt ? fmtDate(jobs[0].createdAt.slice(0, 10)) : '—';
   const filterMenus = `
 <div class="menu" id="hist-type-menu" role="menu" hidden>
   ${[['', 'ทั้งหมด'], ['work', 'ฝากงาน'], ['exam', 'นัดสอบ'], ['answer', 'เฉลยงาน']].map(([key, label]) => `<div class="menu-item" role="menuitem" data-type-filter="${key}">${label}</div>`).join('')}
@@ -1467,7 +1494,15 @@ function renderHistoryHtml() {
   <button type="button" class="filter-chip" id="hist-subject-chip">${homeSubjectFilter || 'วิชา'} <span class="material-icons">expand_more</span></button>
 </div>
 <main class="screen-main screen-main--nav">
-  <div id="history-list">${list}</div>
+  <div class="stat-row">
+    <div class="stat-card"><span class="stat-card__num">${jobs.length}</span><span class="stat-card__label">งานทั้งหมด</span></div>
+    <div class="stat-card"><span class="stat-card__num">${subjectCount}</span><span class="stat-card__label">วิชาที่มีงาน</span></div>
+    <div class="stat-card"><span class="stat-card__num stat-card__num--small">${escapeHtml(latest)}</span><span class="stat-card__label">งานล่าสุด</span></div>
+  </div>
+  <section class="profile-section">
+    <div class="home-section-title">รายการงานทั้งหมด (${jobs.length})</div>
+    <div id="history-list">${list}</div>
+  </section>
 </main>
 ${filterMenus}`;
 }
