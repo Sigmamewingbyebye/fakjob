@@ -1385,6 +1385,23 @@ function chatImageToDataUrl(file, maxSize, quality) {
     reader.readAsDataURL(file);
   });
 }
+function finishAuth(account, payload) {
+  if (payload) {
+    state.followedRooms = Array.isArray(payload.followedRooms) ? payload.followedRooms : [];
+    state.likedIds = Array.isArray(payload.likedIds) ? payload.likedIds : [];
+  }
+  state.account = account;
+  syncUser = account.username;
+  pushedAccount = JSON.stringify(Object.assign({}, account, {
+    followedRooms: state.followedRooms, likedIds: state.likedIds
+  }));
+  navTab = 'home';
+  screen = 'home';
+  saveState();
+  render();
+  applyPendingJoin();
+}
+
 function renderLoginHtml() {
   return `
 <main class="login-screen">
@@ -1422,47 +1439,40 @@ async function onLoginSubmit(e) {
   if (!username) { setFlash('กรุณากรอกชื่อผู้ใช้'); return; }
   if (!password) { setFlash('กรุณากรอกรหัสผ่าน'); return; }
 
-  let account = state.account && state.account.username === username ? state.account : null;
-  let cloudPayload = null;
+  if (!cloudReady) initFirestore();
+  if (!cloudReady) { setFlash('ไม่สามารถเชื่อมต่อระบบได้'); return; }
   try {
-    if (!cloudReady) initFirestore();
-    if (cloudReady) {
-      const ownDoc = await db.collection('accounts').doc(username).get();
-      if (ownDoc.exists) {
-        const payload = ownDoc.data() || {};
-        const acc = Object.assign({}, payload);
-        delete acc.followedRooms;
-        delete acc.likedIds;
-        account = acc;
-        cloudPayload = {
-          account: acc,
-          followedRooms: Array.isArray(payload.followedRooms) ? payload.followedRooms : [],
-          likedIds: Array.isArray(payload.likedIds) ? payload.likedIds : []
-        };
-        pushedAccount = JSON.stringify(Object.assign({}, acc, {
-          followedRooms: cloudPayload.followedRooms, likedIds: cloudPayload.likedIds
-        }));
-      }
+    await signInUser(username, password);
+    if (!authUser) throw new Error('no auth user');
+    const ownDoc = await db.collection('accounts').doc(username).get();
+    const pubDoc = await db.collection('publicProfiles').doc(username).get();
+    const own = ownDoc.exists ? ownDoc.data() || {} : {};
+    const pub = pubDoc.exists ? pubDoc.data() || {} : {};
+    const account = Object.assign({ username, name: pub.name || username }, pub, {
+      username,
+      passwordHash: own.passwordHash || '',
+      authEmail: own.authEmail || authEmailFor(username),
+      uid: own.uid || authUser.uid,
+      mustChangePassword: own.mustChangePassword === true
+    });
+    delete account.followedRooms;
+    delete account.likedIds;
+    const payload = {
+      followedRooms: Array.isArray(own.followedRooms) ? own.followedRooms : [],
+      likedIds: Array.isArray(own.likedIds) ? own.likedIds : []
+    };
+    if (account.mustChangePassword) {
+      state.account = account;
+      state.followedRooms = payload.followedRooms;
+      state.likedIds = payload.likedIds;
+      navTab = 'profile';
+      go('changePassword');
+      return;
     }
-  } catch (err) { /* ใช้ข้อมูลในเครื่องเมื่อออฟไลน์ */ }
-
-  if (!account && username === BOOTSTRAP_ACCOUNT.username) account = BOOTSTRAP_ACCOUNT;
-  if (!account) { setFlash('ไม่พบบัญชีนี้'); return; }
-  if (account.username !== username || hashStr(password) !== account.passwordHash) {
+    finishAuth(account, payload);
+  } catch (err) {
     setFlash('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
-    return;
   }
-  if (cloudPayload) {
-    state.followedRooms = Array.isArray(cloudPayload.followedRooms) ? cloudPayload.followedRooms : [];
-    state.likedIds = Array.isArray(cloudPayload.likedIds) ? cloudPayload.likedIds : [];
-  }
-  state.account = account;
-  syncUser = username;
-  navTab = 'home';
-  screen = 'home';
-  saveState();
-  render();
-  applyPendingJoin();
 }
 
 function renderSignupHtml() {
@@ -1490,6 +1500,42 @@ function renderSignupHtml() {
 </main>`;
 }
 
+function renderChangePasswordHtml() {
+  return `
+<main class="login-screen">
+  <h1 class="t-display-medium">ตั้งรหัสผ่านใหม่</h1>
+  <p class="login-sub">สำหรับบัญชีที่ย้ายมาครั้งแรก กรุณาตั้งรหัสผ่านของคุณเอง</p>
+  <form id="change-password-form" class="login-form">
+    <div class="flash" id="flash" aria-live="polite"></div>
+    <div class="textfield">
+      <input id="new-password" class="textfield__input" type="password" autocomplete="new-password" minlength="6" required autofocus>
+      <span class="textfield__label">รหัสผ่านใหม่ (อย่างน้อย 6 ตัว)</span>
+    </div>
+    <button class="filled-button" type="submit">บันทึกและเข้าสู่ระบบ</button>
+  </form>
+</main>`;
+}
+
+function bindChangePassword() {
+  syncTextfields();
+  document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const pw = document.getElementById('new-password').value;
+    if (pw.length < 6) { setFlash('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'); return; }
+    try {
+      await changeOwnPassword(pw);
+      state.account.passwordHash = hashStr(pw);
+      state.account.mustChangePassword = false;
+      await db.collection('accounts').doc(state.account.username).update({
+        mustChangePassword: false, passwordHash: state.account.passwordHash
+      });
+      finishAuth(state.account, { followedRooms: state.followedRooms, likedIds: state.likedIds });
+    } catch (err) {
+      setFlash('บันทึกไม่สำเร็จ — ลองใหม่อีกครั้งครับ');
+    }
+  });
+}
+
 function bindSignup() {
   syncTextfields();
   document.getElementById('signup-form').addEventListener('submit', onSignupSubmit);
@@ -1503,25 +1549,32 @@ async function onSignupSubmit(e) {
   const password = document.getElementById('signup-password').value;
   if (!username) { setFlash('กรุณากรอก Username'); return; }
   if (!name) { setFlash('กรุณากรอกชื่อ'); return; }
-  if (password.length < 4) { setFlash('รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร'); return; }
-  if (state.account && state.account.username === username) { setFlash('Username นี้ใช้แล้ว'); return; }
+  if (password.length < 6) { setFlash('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'); return; }
+  if (!cloudReady) initFirestore();
+  if (!cloudReady) { setFlash('ไม่สามารถเชื่อมต่อระบบได้'); return; }
   try {
-    if (!cloudReady) initFirestore();
-    if (cloudReady) {
-      const doc = await db.collection('accounts').doc(username).get();
-      if (doc.exists) { setFlash('Username นี้ใช้แล้ว'); return; }
-    }
-  } catch (err) { /* อนุญาตสร้างบัญชีแบบออฟไลน์ */ }
-  state.account = { username, name, passwordHash: hashStr(password), profilePic: '', profilePicCrop: { zoom: 1, x: 0, y: 0 }, profileBanner: '' };
-  state.jobs = [];
-  state.followedRooms = [];
-  state.likedIds = [];
-  syncUser = username;
-  saveState();
-  navTab = 'home';
-  screen = 'home';
-  render();
-  applyPendingJoin();
+    const doc = await db.collection('accounts').doc(username).get();
+    if (doc.exists) { setFlash('Username นี้ใช้แล้ว'); return; }
+    await createUser(username, password);
+    const uid = authUser.uid;
+    const account = {
+      username, name, passwordHash: hashStr(password),
+      profilePic: '', profilePicCrop: { zoom: 1, x: 0, y: 0 }, profileBanner: '',
+      authEmail: authEmailFor(username), uid, mustChangePassword: false
+    };
+    await db.collection('accounts').doc(username).set(account);
+    await db.collection('publicProfiles').doc(username).set({
+      uid, name, profilePic: '', profileBanner: '',
+      profilePicCrop: { zoom: 1, x: 0, y: 0 }, profileBannerCrop: { zoom: 1, x: 0, y: 0 },
+      followedRooms: []
+    });
+    state.jobs = [];
+    state.followedRooms = [];
+    state.likedIds = [];
+    finishAuth(account, { followedRooms: [], likedIds: [] });
+  } catch (err) {
+    setFlash('สร้างบัญชีไม่สำเร็จ — ลองUsername อื่นครับ');
+  }
 }
 function navIconHtml(key, icon) {
   if (key === 'profile') {
@@ -3444,7 +3497,7 @@ function render(options) {
       if (navBar) navBar.style.transform = '';
       lastProfileScroll = 0;
     }
-    navRoot.hidden = screen === 'login' || screen === 'signup' || screen === 'addJob' || screen === 'jobDetail'
+    navRoot.hidden = screen === 'login' || screen === 'signup' || screen === 'changePassword' || screen === 'addJob' || screen === 'jobDetail'
       || screen === 'crop' || screen === 'chatRoom' || screen === 'newChat';
     setNavActive(navTab);
     updateNavAvatar();
@@ -3452,6 +3505,7 @@ function render(options) {
   switch (screen) {
     case 'login': root.innerHTML = renderLoginHtml(); bindLogin(); break;
     case 'signup': root.innerHTML = renderSignupHtml(); bindSignup(); break;
+    case 'changePassword': root.innerHTML = renderChangePasswordHtml(); bindChangePassword(); break;
     case 'home': root.innerHTML = renderHomeHtml(); bindHome(); break;
     case 'dashboard': root.innerHTML = renderDashboardHtml(); bindDashboard(); break;
     case 'history': root.innerHTML = renderHistoryHtml(); bindHistory(); break;
