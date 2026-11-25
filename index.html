@@ -1388,8 +1388,7 @@ let jobSearch = '';
 
 function dueBadge(job) {
   if (!job || !job.dueDate) return '';
-  const d = new Date();
-  const today = [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-');
+  const today = localDateStr();
   const due = job.dueDate;
   if (due < today) return 'เลยกำหนด';
   if (due === today) return 'ครบกำหนดวันนี้';
@@ -1429,8 +1428,13 @@ async function removeComment(jobId, commentId) {
   }
 }
 
+function localDateStr(d) {
+  const day = d || new Date();
+  return [day.getFullYear(), String(day.getMonth() + 1).padStart(2, '0'), String(day.getDate()).padStart(2, '0')].join('-');
+}
+
 function statusOf(job) {
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = localDateStr();
   if (!job.dueDate) return { text: 'ยังไม่ระบุวันส่ง', tone: 'muted' };
   if (job.dueDate < todayStr) return { text: 'เลยกำหนด', tone: 'error' };
   if (job.dueDate > todayStr) return { text: 'ยังไม่ถึงวันที่ส่ง', tone: 'muted' };
@@ -1569,7 +1573,11 @@ async function onLoginSubmit(e) {
       finishAuth(cached, { followedRooms: state.followedRooms, likedIds: state.likedIds });
       return;
     }
-    setFlash('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+    const code = err && err.code ? String(err.code) : '';
+    if (code.indexOf('network') !== -1 || code.indexOf('unavailable') !== -1) setFlash('ไม่สามารถเชื่อมต่อระบบได้ — ลองใหม่ครับ');
+    else if (code.indexOf('invalid-credential') !== -1 || code.indexOf('wrong-password') !== -1 || code.indexOf('user-not-found') !== -1) setFlash('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+    else if (code) setFlash('เข้าสู่ระบบไม่สำเร็จ — ' + code);
+    else setFlash('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
   }
 }
 
@@ -1971,7 +1979,6 @@ function openProfileView(username, from, name) {
     return true;
   }
 
-  if (wanted) fetchProfileRow(wanted, viewFrom);
   return false;
 }
 
@@ -2459,11 +2466,11 @@ function bindChatRoom() {
     const file = fileInput.files && fileInput.files[0];
     fileInput.value = '';
     if (!file) return;
-    if (file.size > 3 * 1024 * 1024) { setFlash('ไฟล์ใหญ่เกิน 3MB กรุณาใช้ไฟล์ที่เล็กกว่า'); return; }
+    if (file.size > 700 * 1024) { setFlash('ไฟล์ใหญ่เกิน 700KB กรุณาใช้ไฟล์ที่เล็กกว่า'); return; }
     setFlash('กำลังส่งไฟล์...');
     fileToDataUrl(file).then((dataUrl) => {
-      if (dataUrl) sendChatFile(dataUrl, file.name, file.type, false);
-      setFlash('');
+      if (dataUrl && dataUrl.length <= 700000) { sendChatFile(dataUrl, file.name, file.type, false); setFlash(''); }
+      else setFlash('ไฟล์ใหญ่เกินไป กรุณาใช้ไฟล์ที่เล็กกว่า');
     });
   });
   const box = document.getElementById('chat-messages');
@@ -2510,7 +2517,17 @@ function bindJobSearch() {
       const job = state.jobs.find((j) => j.id === card.dataset.jobId);
       card.hidden = !!job && !matchesSearch(job);
     });
+    updateStatCounts();
   });
+}
+
+function updateStatCounts() {
+  const scope = screen === 'history' ? '#history-list .job-card' : '#home-jobs .job-card';
+  const visible = Array.from(document.querySelectorAll(scope)).filter((c) => !c.hidden).length;
+  const nums = document.querySelectorAll('.stat-card__num');
+  if (!nums.length) return;
+  if (screen === 'history') nums[0].textContent = String(visible);
+  else if (nums[1]) nums[1].textContent = String(visible);
 }
 
 function bindFilterChips() {
@@ -2956,6 +2973,7 @@ function bindJobDetail() {
       createdAt: new Date().toISOString()
     };
     state.comments.push(comment);
+    saveLocal();
     commentInput.value = '';
     render({ noAnim: true });
     db.collection('comments').doc(comment.id).set(comment).catch(() => setFlash('ส่งคอมเม้นต์ไม่สำเร็จ'));
@@ -3142,12 +3160,12 @@ function bindAddJob() {
     if (!files.length) return;
     const list = document.getElementById('job-files-list');
     files.forEach((file) => {
-      if ((file.size || 0) > 3 * 1024 * 1024) { setFlash('ไฟล์ใหญ่เกิน 3MB ข้ามไฟล์นี้'); return; }
+      if ((file.size || 0) > 700 * 1024) { setFlash('ไฟล์ใหญ่เกิน 700KB ข้ามไฟล์นี้'); return; }
       const read = (file.type || '').startsWith('image/')
         ? chatImageToDataUrl(file, 1280, 0.8)
         : fileToDataUrl(file);
       read.then((dataUrl) => {
-        if (!dataUrl) return;
+        if (!dataUrl || dataUrl.length > 700000) { setFlash('ไฟล์ใหญ่เกินไป ข้ามไฟล์นี้'); return; }
         const row = document.createElement('div');
         row.className = 'file-row';
         const isImage = (file.type || '').startsWith('image/');
