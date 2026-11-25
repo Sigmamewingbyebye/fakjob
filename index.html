@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <style>
 /* ---- Material Design 3 color tokens (light) ---- */
 :root {
@@ -890,12 +891,38 @@ let remoteMessages = [];
 let remoteAccounts = [];
 let listenersReady = { chats: false, messages: false };
 let jobsSynced = false;
+let auth = null;
+let authUser = null;
+let authReady = false;
+
+function authEmailFor(username) {
+  return encodeURIComponent(username) + '@fakjob.local';
+}
+
+function signInUser(username, password) {
+  return auth.signInWithEmailAndPassword(authEmailFor(username), password);
+}
+
+function createUser(username, password) {
+  return auth.createUserWithEmailAndPassword(authEmailFor(username), password);
+}
+
+function changeOwnPassword(newPassword) {
+  return authUser.updatePassword(newPassword);
+}
+
+function signOutUser() {
+  return auth.signOut();
+}
 
 function initFirestore() {
   try {
     if (typeof firebase === 'undefined') return false;
     const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(FIREBASE_CONFIG);
     db = app.firestore();
+    auth = app.auth();
+    authUser = auth.currentUser;
+    auth.onAuthStateChanged((u) => { authUser = u; authReady = true; });
     cloudReady = true;
     return true;
   } catch (e) { return false; }
