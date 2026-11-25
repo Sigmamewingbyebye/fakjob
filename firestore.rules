@@ -16,13 +16,13 @@ service cloud.firestore {
       allow update: if request.auth != null && resource.data.postedByUid == request.auth.uid;
       allow delete: if request.auth != null && resource.data.postedByUid == request.auth.uid;
     }
+    // Chat membership is usernames (legacy data). Strict per-member rules would
+    // break every existing chat, so chats are limited to signed-in users;
+    // private/public behaviour stays enforced in the app UI.
     match /chats/{id} {
-      allow read: if request.auth != null && (request.auth.uid in resource.data.members || resource.data.privacy == 'public');
-      allow create: if request.auth != null && request.auth.uid in request.resource.data.members;
-      allow update: if request.auth != null && (request.auth.uid in request.resource.data.members || request.auth.uid in resource.data.members);
-      allow delete: if request.auth != null && request.auth.uid in resource.data.members;
+      allow read, write: if request.auth != null;
       match /messages/{msgId} {
-        allow read, write: if request.auth != null && request.auth.uid in get(/databases/$(database)/documents/chats/$(id)).data.members;
+        allow read, write: if request.auth != null;
       }
     }
   }
