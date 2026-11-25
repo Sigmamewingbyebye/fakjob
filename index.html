@@ -796,7 +796,10 @@ const SUBJECTS = [
   'สังคมศึกษา', 'ประวัติศาสตร์', 'ศิลปะ', 'นาฎศิลป์', 'ภาษาจีน', 'ฟิสิกส์'
 ];
 
-const state = { account: null, jobs: [], followedRooms: [], likedIds: [], chats: [] };
+const state = {
+  account: null, jobs: [], followedRooms: [], likedIds: [], chats: [],
+  deletedJobIds: [], deletedChatIds: []
+};
 let screen = 'login';
 let selectedJobId = null;
 let currentChatId = null;
@@ -905,11 +908,41 @@ function updateSyncBadge() {
   if (badge) badge.textContent = syncState === 'on' ? '☁️ ซิงก์ข้อมูลออนไลน์' : '⚠️ ข้อมูลอยู่ในเครื่องเท่านั้น';
 }
 
+function mergeJobs(local, remote, deleted) {
+  const map = new Map();
+  (local || []).forEach((j) => { if (j && j.id) map.set(j.id, j); });
+  (remote || []).forEach((j) => {
+    if (!j || !j.id || deleted.indexOf(j.id) !== -1) return;
+    const cur = map.get(j.id);
+    const t = String(j.updatedAt || j.createdAt || '');
+    if (!cur || t >= String(cur.updatedAt || cur.createdAt || '')) map.set(j.id, j);
+  });
+  return Array.from(map.values()).filter((j) => deleted.indexOf(j.id) === -1);
+}
+
+function mergeChats(local, remote, deleted) {
+  const map = new Map();
+  (local || []).forEach((c) => { if (c && c.id) map.set(c.id, c); });
+  (remote || []).forEach((c) => {
+    if (!c || !c.id || deleted.indexOf(c.id) !== -1) return;
+    const lc = map.get(c.id);
+    if (!lc) { map.set(c.id, c); return; }
+    const members = Array.from(new Set((lc.members || []).concat(c.members || [])));
+    const msgMap = new Map();
+    (lc.messages || []).forEach((m) => { if (m && m.id) msgMap.set(m.id, m); });
+    (c.messages || []).forEach((m) => { if (m && m.id && !msgMap.has(m.id)) msgMap.set(m.id, m); });
+    const messages = Array.from(msgMap.values())
+      .sort((a, b) => String(a.createdAt || '').localeCompare(String(b.createdAt || '')));
+    map.set(c.id, Object.assign({}, c, lc, { members, messages }));
+  });
+  return Array.from(map.values()).filter((c) => deleted.indexOf(c.id) === -1);
+}
+
 async function cloudPull() {
   if (syncing || pushPending) return;
   syncing = true;
   try {
-    const before = JSON.stringify({ a: state.account, j: state.jobs, f: state.followedRooms, l: state.likedIds, c: state.chats });
+    const before = JSON.stringify({ a: state.account, j: state.jobs, f: state.followedRooms, l: state.likedIds, c: state.chats, dj: state.deletedJobIds, dc: state.deletedChatIds });
     const res = await sbRequest('fakjob_state?select=id,payload,updated_at');
     const rows = await res.json();
     if (rows.length) {
@@ -919,10 +952,13 @@ async function cloudPull() {
       const legacy = rows.find((r) => r.id === SYNC_ROW);
 
       const fresh = (row) => !lastLocalChange || (Date.parse(row.updated_at) || 0) >= lastLocalChange;
-      const sharedFresh = shared && fresh(shared);
       const ownFresh = ownRow && fresh(ownRow);
-      if (sharedFresh) state.jobs = Array.isArray(shared.payload.jobs) ? shared.payload.jobs : [];
-      if (chatsRow && chatsRow.payload && Array.isArray(chatsRow.payload.chats)) state.chats = chatsRow.payload.chats;
+      const remoteDeletedJobs = shared && Array.isArray(shared.payload.deletedJobIds) ? shared.payload.deletedJobIds : [];
+      const remoteDeletedChats = chatsRow && Array.isArray(chatsRow.payload.deletedChatIds) ? chatsRow.payload.deletedChatIds : [];
+      state.deletedJobIds = Array.from(new Set(state.deletedJobIds.concat(remoteDeletedJobs)));
+      state.deletedChatIds = Array.from(new Set(state.deletedChatIds.concat(remoteDeletedChats)));
+      state.jobs = mergeJobs(state.jobs, shared && Array.isArray(shared.payload.jobs) ? shared.payload.jobs : [], state.deletedJobIds);
+      state.chats = mergeChats(state.chats, chatsRow && Array.isArray(chatsRow.payload.chats) ? chatsRow.payload.chats : [], state.deletedChatIds);
       if (pendingJoin) applyPendingJoin();
       knownRows = rows;
       knownAccounts = rows
@@ -962,14 +998,15 @@ async function cloudPull() {
         cloudPush();
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        account: state.account, jobs: state.jobs, followedRooms: state.followedRooms, likedIds: state.likedIds, chats: state.chats
+        account: state.account, jobs: state.jobs, followedRooms: state.followedRooms, likedIds: state.likedIds,
+        chats: state.chats, deletedJobIds: state.deletedJobIds, deletedChatIds: state.deletedChatIds
       }));
       syncState = 'on';
       const safeScreen = screen === 'dashboard' || screen === 'home' || screen === 'history'
         || screen === 'profile' || screen === 'viewProfile' || screen === 'chat' || screen === 'newChat';
       const focus = document.activeElement;
       const typing = focus && (focus.tagName === 'INPUT' || focus.tagName === 'TEXTAREA');
-      const changed = before !== JSON.stringify({ a: state.account, j: state.jobs, f: state.followedRooms, l: state.likedIds, c: state.chats });
+      const changed = before !== JSON.stringify({ a: state.account, j: state.jobs, f: state.followedRooms, l: state.likedIds, c: state.chats, dj: state.deletedJobIds, dc: state.deletedChatIds });
       if (changed && !accountsChanged && screen === 'chatRoom') refreshChatRoom();
       else if ((changed || accountsChanged) && (safeScreen || screen === 'chatRoom') && !typing) render({ noAnim: true });
     }
@@ -996,8 +1033,8 @@ async function cloudPush() {
       body: JSON.stringify({ id, payload: Object.assign({}, payload, { updated_at: now }) })
     });
     await Promise.all([
-      post('jobs', { jobs: state.jobs }),
-      post('chats', { chats: state.chats }),
+      post('jobs', { jobs: state.jobs, deletedJobIds: state.deletedJobIds }),
+      post('chats', { chats: state.chats, deletedChatIds: state.deletedChatIds }),
       post(syncRow(), { account: state.account, followedRooms: state.followedRooms, likedIds: state.likedIds })
     ]);
     syncState = 'on';
@@ -1069,16 +1106,23 @@ function loadState() {
     state.followedRooms = parsed && Array.isArray(parsed.followedRooms) ? parsed.followedRooms : [];
     state.likedIds = parsed && Array.isArray(parsed.likedIds) ? parsed.likedIds : [];
     state.chats = parsed && Array.isArray(parsed.chats) ? parsed.chats : [];
+    state.deletedJobIds = parsed && Array.isArray(parsed.deletedJobIds) ? parsed.deletedJobIds : [];
+    state.deletedChatIds = parsed && Array.isArray(parsed.deletedChatIds) ? parsed.deletedChatIds : [];
   } catch (e) {
     state.account = null;
     state.jobs = [];
     state.chats = [];
+    state.deletedJobIds = [];
+    state.deletedChatIds = [];
   }
 }
 
 function saveState() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ account: state.account, jobs: state.jobs, followedRooms: state.followedRooms, likedIds: state.likedIds, chats: state.chats }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      account: state.account, jobs: state.jobs, followedRooms: state.followedRooms, likedIds: state.likedIds,
+      chats: state.chats, deletedJobIds: state.deletedJobIds, deletedChatIds: state.deletedChatIds
+    }));
   } catch (e) { /* storage unavailable */ }
   lastLocalChange = Date.now();
   scheduleCloudPush();
@@ -1773,8 +1817,10 @@ function leaveGroupChat() {
   if (!chat || chat.type !== 'group' || !state.account) return;
   if (!window.confirm('ออกจากกลุ่มนี้หรือไม่?')) return;
   chat.members = (chat.members || []).filter((u) => u !== me());
-  if (!chat.members.length) state.chats = state.chats.filter((c) => c.id !== chat.id);
-  else if (chat.createdBy === me()) chat.createdBy = chat.members[0];
+  if (!chat.members.length) {
+    state.chats = state.chats.filter((c) => c.id !== chat.id);
+    if (state.deletedChatIds.indexOf(chat.id) === -1) state.deletedChatIds.push(chat.id);
+  } else if (chat.createdBy === me()) chat.createdBy = chat.members[0];
   saveState();
   currentChatId = null;
   go('chat');
@@ -2604,6 +2650,7 @@ function bindJobDetail() {
     if (!job || !state.account || job.postedBy !== state.account.username) { setFlash('ลบได้เฉพาะงานของตัวเอง'); return; }
     if (!window.confirm('ลบงานนี้หรือไม่?')) return;
     state.jobs = state.jobs.filter((job) => job.id !== selectedJobId);
+    if (state.deletedJobIds.indexOf(selectedJobId) === -1) state.deletedJobIds.push(selectedJobId);
     saveState();
     if (detailFrom === 'viewProfile') { go('viewProfile'); }
     else if (detailFrom === 'home') { navTab = 'home'; go('home'); }
