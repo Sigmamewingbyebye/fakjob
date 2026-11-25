@@ -167,6 +167,9 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
 .job-card__title { font-size: 15px; font-weight: 500; margin: 6px 0 4px; line-height: 20px; }
 .job-card__meta { font-size: 11px; color: var(--md-sys-color-on-surface-variant); margin: 0 0 6px; }
 .job-card__status { font-size: 11px; }
+.job-card__due { display: inline-block; margin-left: 4px; padding: 2px 8px; border-radius: var(--md-shape-full); font-size: 10px; font-weight: 600; }
+.job-card__due.due-warn { background: var(--md-sys-color-tertiary-container); color: var(--md-sys-color-on-tertiary-container); }
+.job-card__due.due-over { background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container); }
 .status--error { color: var(--md-sys-color-error); }
 .status--muted { color: var(--md-sys-color-on-surface-variant); }
 
@@ -1349,6 +1352,27 @@ function fmtDate(iso) {
   return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+let jobSearch = '';
+
+function dueBadge(job) {
+  if (!job || !job.dueDate) return '';
+  const d = new Date();
+  const today = [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-');
+  const due = job.dueDate;
+  if (due < today) return 'เลยกำหนด';
+  if (due === today) return 'ครบกำหนดวันนี้';
+  const diff = Math.round((Date.parse(due + 'T00:00:00') - Date.parse(today + 'T00:00:00')) / 86400000);
+  if (diff > 0 && diff <= 3) return 'ใกล้กำหนด · ' + fmtDate(due);
+  return '';
+}
+
+function matchesSearch(job) {
+  if (!jobSearch) return true;
+  const q = jobSearch.toLowerCase();
+  return [job.title, job.content, job.subject, job.subjectOther, job.postedByName]
+    .some((v) => String(v || '').toLowerCase().indexOf(q) !== -1);
+}
+
 function statusOf(job) {
   const todayStr = new Date().toISOString().slice(0, 10);
   if (!job.dueDate) return { text: 'ยังไม่ระบุวันส่ง', tone: 'muted' };
@@ -1732,7 +1756,8 @@ function renderHomeHtml() {
   const inRooms = [...state.jobs]
     .filter((j) => followed.some((f) => f.grade === j.grade && f.room === j.room)
       && (!homeTypeFilter || (j.type || 'work') === homeTypeFilter)
-      && (!homeSubjectFilter || (j.subjectOther || j.subject) === homeSubjectFilter))
+      && (!homeSubjectFilter || (j.subjectOther || j.subject) === homeSubjectFilter)
+      && matchesSearch(j))
     .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
   const liked = [...state.jobs]
     .filter((j) => state.likedIds.indexOf(j.id) !== -1)
@@ -1754,6 +1779,7 @@ function renderHomeHtml() {
   <button type="button" class="filter-chip" id="home-subject-chip">${homeSubjectFilter || 'วิชา'} <span class="material-icons">expand_more</span></button>
 </div>
 <main class="screen-main screen-main--nav">
+  <div class="chat-list-search"><span class="material-icons">search</span><input id="job-search" type="search" placeholder="ค้นหางาน" value="${escapeHtml(jobSearch)}" autocomplete="off"></div>
   <div class="stat-row">
     <div class="stat-card"><span class="stat-card__num">${followed.length}</span><span class="stat-card__label">ห้องที่ติดตาม</span></div>
     <div class="stat-card"><span class="stat-card__num">${inRooms.length}</span><span class="stat-card__label">งานในห้อง</span></div>
@@ -2411,6 +2437,19 @@ function bindNewChat() {
   });
 }
 
+function bindJobSearch() {
+  const input = document.getElementById('job-search');
+  if (!input) return;
+  input.addEventListener('input', () => {
+    jobSearch = input.value.trim();
+    const scope = screen === 'history' ? '#history-list' : '#home-jobs, #liked-jobs';
+    document.querySelectorAll(scope + ' .job-card').forEach((card) => {
+      const job = state.jobs.find((j) => j.id === card.dataset.jobId);
+      card.hidden = !!job && !matchesSearch(job);
+    });
+  });
+}
+
 function bindFilterChips() {
   [['home-type-chip', 'home-type-menu'], ['home-subject-chip', 'home-subject-menu'],
    ['dash-type-chip', 'dash-type-menu'], ['dash-subject-chip', 'dash-subject-menu'],
@@ -2433,6 +2472,7 @@ function bindFilterChips() {
 
 function bindHome() {
   bindFilterChips();
+  bindJobSearch();
   document.querySelectorAll('#home-jobs .job-card, #liked-jobs .job-card').forEach((card) => {
     card.addEventListener('click', () => { detailFrom = 'home'; go('jobDetail', card.dataset.jobId); });
     const like = card.querySelector('.job-like');
@@ -2450,7 +2490,8 @@ function bindHome() {
 function renderHistoryHtml() {
   const jobs = [...state.jobs]
     .filter((j) => (!homeTypeFilter || (j.type || 'work') === homeTypeFilter)
-      && (!homeSubjectFilter || (j.subjectOther || j.subject) === homeSubjectFilter))
+      && (!homeSubjectFilter || (j.subjectOther || j.subject) === homeSubjectFilter)
+      && matchesSearch(j))
     .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
   const list = jobs.length
     ? jobs.map((job) => renderJobCardHtml(job)).join('')
@@ -2472,6 +2513,7 @@ function renderHistoryHtml() {
   <button type="button" class="filter-chip" id="hist-subject-chip">${homeSubjectFilter || 'วิชา'} <span class="material-icons">expand_more</span></button>
 </div>
 <main class="screen-main screen-main--nav">
+  <div class="chat-list-search"><span class="material-icons">search</span><input id="job-search" type="search" placeholder="ค้นหางาน" value="${escapeHtml(jobSearch)}" autocomplete="off"></div>
   <div class="stat-row">
     <div class="stat-card"><span class="stat-card__num">${jobs.length}</span><span class="stat-card__label">งานทั้งหมด</span></div>
     <div class="stat-card"><span class="stat-card__num">${subjectCount}</span><span class="stat-card__label">วิชาที่มีงาน</span></div>
@@ -2486,6 +2528,7 @@ ${filterMenus}`;
 }
 
 function bindHistory() {
+  bindJobSearch();
   document.querySelectorAll('#history-list .job-card').forEach((card) => {
     card.addEventListener('click', () => { detailFrom = 'history'; go('jobDetail', card.dataset.jobId); });
     const like = card.querySelector('.job-like');
@@ -2600,7 +2643,7 @@ function renderJobCardHtml(job) {
     </button>
     · ${fmtDateTime(job.createdAt)}
   </div>
-  <div class="job-card__status t-body-small status--${status.tone}">${status.text}${job.dueDate ? ` · วันที่ส่ง: ${fmtDate(job.dueDate)}` : ''}</div>
+  <div class="job-card__status t-body-small status--${status.tone}">${status.text}${job.dueDate ? ` · วันที่ส่ง: ${fmtDate(job.dueDate)}` : ''}${dueBadge(job) ? ` <span class="job-card__due ${job.dueDate < new Date().toISOString().slice(0,10) ? 'due-over' : 'due-warn'}">${escapeHtml(dueBadge(job))}</span>` : ''}</div>
 </article>`;
 }
 
