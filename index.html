@@ -926,7 +926,12 @@ function initFirestore() {
     db = app.firestore();
     auth = app.auth();
     authUser = auth.currentUser;
-    auth.onAuthStateChanged((u) => { authUser = u; authReady = true; });
+    auth.onAuthStateChanged((u) => {
+      authUser = u;
+      authReady = true;
+      if (u) ensureListeners();
+      else stopCloudListeners();
+    });
     cloudReady = true;
     return true;
   } catch (e) { return false; }
@@ -990,11 +995,15 @@ function applyRemoteChats() {
   if (pendingJoin) applyPendingJoin();
 }
 
+function listen(q, cb, err) {
+  listenerUnsubs.push(q.onSnapshot(cb, err));
+}
+
 function startCloudListeners() {
   if (!cloudReady) return;
   const fail = () => { syncState = 'off'; updateSyncBadge(); };
 
-  db.collection('jobs').onSnapshot((snap) => {
+  listen(db.collection('jobs'), (snap) => {
     jobsSynced = true;
     const jobs = snap.docs.map((d) => Object.assign({ id: d.id }, docData(d)));
     if (JSON.stringify(jobs) !== JSON.stringify(state.jobs)) {
@@ -1006,19 +1015,19 @@ function startCloudListeners() {
     }
   }, fail);
 
-  db.collection('chats').onSnapshot((snap) => {
+  listen(db.collection('chats'), (snap) => {
     remoteChatMeta = snap.docs.map((d) => Object.assign({ id: d.id }, docData(d)));
     listenersReady.chats = true;
     applyRemoteChats();
   }, fail);
 
-  db.collectionGroup('messages').onSnapshot((snap) => {
+  listen(db.collectionGroup('messages'), (snap) => {
     remoteMessages = snap.docs.map((d) => Object.assign({ id: d.id, chatId: d.ref.parent.parent.id }, docData(d)));
     listenersReady.messages = true;
     applyRemoteChats();
   }, fail);
 
-  db.collection('comments').onSnapshot((snap) => {
+  listen(db.collection('comments'), (snap) => {
     const comments = snap.docs.map((d) => Object.assign({ id: d.id }, docData(d)));
     if (JSON.stringify(comments) !== JSON.stringify(state.comments)) {
       state.comments = comments;
@@ -1027,7 +1036,7 @@ function startCloudListeners() {
     }
   }, fail);
 
-  db.collection('publicProfiles').onSnapshot((snap) => {
+  listen(db.collection('publicProfiles'), (snap) => {
     const profiles = snap.docs.map((d) => Object.assign({ username: d.id }, docData(d)));
     knownAccounts = profiles;
     knownRows = profiles.map((p) => ({
@@ -1093,14 +1102,25 @@ function mergeChats(local, remote, deleted) {
   return Array.from(map.values()).filter((c) => deleted.indexOf(c.id) === -1);
 }
 
+let listenerUnsubs = [];
+
+function stopCloudListeners() {
+  listenerUnsubs.forEach((fn) => { try { fn(); } catch (e) {} });
+  listenerUnsubs = [];
+  cloudPull.started = false;
+}
+
+function ensureListeners() {
+  if (!cloudReady || !authUser || cloudPull.started) return;
+  cloudPull.started = true;
+  syncState = 'on';
+  startCloudListeners();
+  updateSyncBadge();
+}
+
 async function cloudPull() {
   if (!cloudReady) initFirestore();
-  if (cloudReady && !cloudPull.started) {
-    cloudPull.started = true;
-    syncState = 'on';
-    startCloudListeners();
-    updateSyncBadge();
-  }
+  ensureListeners();
 }
 
 function scheduleCloudPush() {
@@ -1513,9 +1533,9 @@ async function onLoginSubmit(e) {
   if (!password) { setFlash('กรุณากรอกรหัสผ่าน'); return; }
 
   if (!cloudReady) initFirestore();
-  if (!cloudReady) { setFlash('ไม่สามารถเชื่อมต่อระบบได้'); return; }
   try {
-    await signInUser(username, password);
+    const credential = await signInUser(username, password);
+    authUser = (credential && credential.user) || (auth && auth.currentUser);
     if (!authUser) throw new Error('no auth user');
     const ownDoc = await db.collection('accounts').doc(username).get();
     const pubDoc = await db.collection('publicProfiles').doc(username).get();
@@ -1544,6 +1564,11 @@ async function onLoginSubmit(e) {
     }
     finishAuth(account, payload);
   } catch (err) {
+    const cached = state.account && state.account.username === username ? state.account : null;
+    if (cached && hashStr(password) === cached.passwordHash) {
+      finishAuth(cached, { followedRooms: state.followedRooms, likedIds: state.likedIds });
+      return;
+    }
     setFlash('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
   }
 }
@@ -1626,9 +1651,9 @@ async function onSignupSubmit(e) {
   if (!cloudReady) initFirestore();
   if (!cloudReady) { setFlash('ไม่สามารถเชื่อมต่อระบบได้'); return; }
   try {
-    const doc = await db.collection('accounts').doc(username).get();
-    if (doc.exists) { setFlash('Username นี้ใช้แล้ว'); return; }
-    await createUser(username, password);
+    const credential = await createUser(username, password);
+    authUser = (credential && credential.user) || (auth && auth.currentUser);
+    if (!authUser) throw new Error('no auth user');
     const uid = authUser.uid;
     const account = {
       username, name, passwordHash: hashStr(password),
@@ -1646,7 +1671,9 @@ async function onSignupSubmit(e) {
     state.likedIds = [];
     finishAuth(account, { followedRooms: [], likedIds: [] });
   } catch (err) {
-    setFlash('สร้างบัญชีไม่สำเร็จ — ลองUsername อื่นครับ');
+    const code = err && err.code ? String(err.code) : '';
+    if (code.indexOf('email-already-in-use') !== -1) setFlash('Username นี้ใช้แล้ว');
+    else setFlash('สร้างบัญชีไม่สำเร็จ — ลองUsername อื่นครับ');
   }
 }
 function navIconHtml(key, icon) {
