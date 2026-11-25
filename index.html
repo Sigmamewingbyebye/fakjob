@@ -1014,19 +1014,23 @@ function startCloudListeners() {
     applyRemoteChats();
   }, fail);
 
-  db.collection('accounts').onSnapshot((snap) => {
-    remoteAccounts = snap.docs.map((d) => Object.assign({ username: d.id }, docData(d)));
-    knownAccounts = remoteAccounts;
-    knownRows = remoteAccounts.map((a) => ({
-      id: a.username,
-      payload: { account: a, followedRooms: Array.isArray(a.followedRooms) ? a.followedRooms : [] }
+  db.collection('publicProfiles').onSnapshot((snap) => {
+    const profiles = snap.docs.map((d) => Object.assign({ username: d.id }, docData(d)));
+    knownAccounts = profiles;
+    knownRows = profiles.map((p) => ({
+      id: p.username,
+      payload: { account: p, followedRooms: Array.isArray(p.followedRooms) ? p.followedRooms : [] }
     }));
-    if (state.account) {
-      const own = remoteAccounts.find((a) => a.username === state.account.username);
-      if (own && !pushPending) {
-        const acc = Object.assign({}, own);
-        delete acc.followedRooms;
-        delete acc.likedIds;
+    if (state.account && !pushPending) {
+      const own = profiles.find((p) => p.username === state.account.username);
+      if (own) {
+        const acc = Object.assign({}, state.account, {
+          name: own.name || state.account.name,
+          profilePic: own.profilePic || '',
+          profileBanner: own.profileBanner || '',
+          profilePicCrop: own.profilePicCrop || state.account.profilePicCrop,
+          profileBannerCrop: own.profileBannerCrop || state.account.profileBannerCrop
+        });
         if (JSON.stringify(acc) !== JSON.stringify(state.account)) {
           state.account = acc;
           saveLocal();
@@ -1164,6 +1168,15 @@ async function cloudPush() {
         const data = Object.assign({}, acc);
         delete data.username;
         batch.set(db.collection('accounts').doc(state.account.username), data, { merge: true });
+        batch.set(db.collection('publicProfiles').doc(state.account.username), {
+          uid: state.account.uid || (authUser && authUser.uid) || '',
+          name: state.account.name || state.account.username,
+          profilePic: state.account.profilePic || '',
+          profileBanner: state.account.profileBanner || '',
+          profilePicCrop: state.account.profilePicCrop || { zoom: 1, x: 0, y: 0 },
+          profileBannerCrop: state.account.profileBannerCrop || { zoom: 1, x: 0, y: 0 },
+          followedRooms: state.followedRooms
+        }, { merge: true });
         pushedAccount = sig;
         any = true;
       }
@@ -2831,6 +2844,7 @@ function bindJobDetail() {
       id: 'c-' + Date.now().toString(36),
       author: state.account ? (state.account.name || state.account.username) : 'guest',
       authorUser: state.account ? state.account.username : '',
+      authorUid: authUser ? authUser.uid : '',
       text,
       createdAt: new Date().toISOString()
     });
@@ -3077,6 +3091,7 @@ function bindAddJob() {
       files,
       links,
       postedBy: state.account.username,
+      postedByUid: authUser ? authUser.uid : '',
       postedByName: state.account.name || state.account.username,
       postedByPic: state.account.profilePic || '',
       createdAt: new Date().toISOString()
@@ -3360,10 +3375,12 @@ function bindProfile() {
     });
   });
 
-  document.getElementById('profile-logout').addEventListener('click', () => {
+  document.getElementById('profile-logout').addEventListener('click', async () => {
+    try { await signOutUser(); } catch (e) {}
     state.account = null;
     syncUser = '';
     state.jobs = [];
+    state.chats = [];
     state.followedRooms = [];
     state.likedIds = [];
     saveState();
