@@ -1574,7 +1574,8 @@ async function onLoginSubmit(e) {
       return;
     }
     const code = err && err.code ? String(err.code) : '';
-    if (code.indexOf('network') !== -1 || code.indexOf('unavailable') !== -1) setFlash('ไม่สามารถเชื่อมต่อระบบได้ — ลองใหม่ครับ');
+    if (code.indexOf('permission-denied') !== -1) setFlash('ไม่มีสิทธิ์อ่านข้อมูลบัญชี — ตรวจสอบ Firestore Rules');
+    else if (code.indexOf('network') !== -1 || code.indexOf('unavailable') !== -1) setFlash('ไม่สามารถเชื่อมต่อระบบได้ — ลองใหม่ครับ');
     else if (code.indexOf('invalid-credential') !== -1 || code.indexOf('wrong-password') !== -1 || code.indexOf('user-not-found') !== -1) setFlash('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
     else if (code) setFlash('เข้าสู่ระบบไม่สำเร็จ — ' + code);
     else setFlash('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
