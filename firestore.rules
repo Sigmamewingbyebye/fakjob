@@ -13,11 +13,13 @@ service cloud.firestore {
     match /jobs/{id} {
       allow read: if request.auth != null;
       allow create: if request.auth != null && request.resource.data.postedByUid == request.auth.uid;
-      allow update: if request.auth != null && (
-        resource.data.postedByUid == request.auth.uid ||
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['comments'])
-      );
+      allow update: if request.auth != null && resource.data.postedByUid == request.auth.uid;
       allow delete: if request.auth != null && resource.data.postedByUid == request.auth.uid;
+    }
+    match /comments/{commentId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.authorUid == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.authorUid == request.auth.uid;
     }
     // Chat membership is usernames (legacy data). Strict per-member rules would
     // break every existing chat, so chats are limited to signed-in users;

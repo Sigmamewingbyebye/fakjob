@@ -813,7 +813,7 @@ const SUBJECTS = [
 ];
 
 const state = {
-  account: null, jobs: [], followedRooms: [], likedIds: [], chats: [],
+  account: null, jobs: [], followedRooms: [], likedIds: [], chats: [], comments: [],
   deletedJobIds: [], deletedChatIds: []
 };
 let screen = 'login';
@@ -940,7 +940,7 @@ function saveLocal() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       account: state.account, jobs: state.jobs, followedRooms: state.followedRooms,
-      likedIds: state.likedIds, chats: state.chats
+      likedIds: state.likedIds, chats: state.chats, comments: state.comments
     }));
   } catch (e) {}
 }
@@ -1016,6 +1016,15 @@ function startCloudListeners() {
     remoteMessages = snap.docs.map((d) => Object.assign({ id: d.id, chatId: d.ref.parent.parent.id }, docData(d)));
     listenersReady.messages = true;
     applyRemoteChats();
+  }, fail);
+
+  db.collection('comments').onSnapshot((snap) => {
+    const comments = snap.docs.map((d) => Object.assign({ id: d.id }, docData(d)));
+    if (JSON.stringify(comments) !== JSON.stringify(state.comments)) {
+      state.comments = comments;
+      saveLocal();
+      renderAfterRemoteChange();
+    }
   }, fail);
 
   db.collection('publicProfiles').onSnapshot((snap) => {
@@ -1259,6 +1268,7 @@ function loadState() {
     state.followedRooms = parsed && Array.isArray(parsed.followedRooms) ? parsed.followedRooms : [];
     state.likedIds = parsed && Array.isArray(parsed.likedIds) ? parsed.likedIds : [];
     state.chats = parsed && Array.isArray(parsed.chats) ? parsed.chats : [];
+    state.comments = parsed && Array.isArray(parsed.comments) ? parsed.comments : [];
     state.deletedJobIds = parsed && Array.isArray(parsed.deletedJobIds) ? parsed.deletedJobIds : [];
     state.deletedChatIds = parsed && Array.isArray(parsed.deletedChatIds) ? parsed.deletedChatIds : [];
   } catch (e) {
@@ -1274,7 +1284,8 @@ function saveState() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       account: state.account, jobs: state.jobs, followedRooms: state.followedRooms, likedIds: state.likedIds,
-      chats: state.chats, deletedJobIds: state.deletedJobIds, deletedChatIds: state.deletedChatIds
+      chats: state.chats, comments: state.comments,
+      deletedJobIds: state.deletedJobIds, deletedChatIds: state.deletedChatIds
     }));
   } catch (e) { /* storage unavailable */ }
   lastLocalChange = Date.now();
@@ -1378,16 +1389,9 @@ function canEditComment(c) {
   return !!(c && c.authorUid && authUser && c.authorUid === authUser.uid);
 }
 
-async function updateJobComments(jobId, updater) {
-  const job = state.jobs.find((j) => j.id === jobId);
-  if (!job) return false;
-  if (!Array.isArray(job.comments)) job.comments = [];
-  const next = updater(job.comments);
-  if (!next) return false;
+async function patchComment(jobId, commentId, text) {
   try {
-    await db.collection('jobs').doc(jobId).update({ comments: next });
-    job.comments = next;
-    saveLocal();
+    await db.collection('comments').doc(commentId).update({ text, editedAt: new Date().toISOString() });
     return true;
   } catch (e) {
     setFlash('แก้ไขคอมเม้นต์ไม่สำเร็จ');
@@ -1395,13 +1399,14 @@ async function updateJobComments(jobId, updater) {
   }
 }
 
-function patchComment(jobId, commentId, text) {
-  return updateJobComments(jobId, (comments) => comments.map((c) =>
-    c.id === commentId ? Object.assign({}, c, { text, editedAt: new Date().toISOString() }) : c));
-}
-
-function removeComment(jobId, commentId) {
-  return updateJobComments(jobId, (comments) => comments.filter((c) => c.id !== commentId));
+async function removeComment(jobId, commentId) {
+  try {
+    await db.collection('comments').doc(commentId).delete();
+    return true;
+  } catch (e) {
+    setFlash('ลบคอมเม้นต์ไม่สำเร็จ');
+    return false;
+  }
 }
 
 function statusOf(job) {
@@ -2692,7 +2697,8 @@ function renderJobDetailHtml(job) {
 <li class="file-row"><a class="file-row__link" href="${escapeHtml(f.dataUrl)}" download="${escapeHtml(f.name)}">${escapeHtml(f.name)}</a></li>`).join('');
   const linksHtml = jobLinks.map((l) => `
 <li class="link-list-ul__item"><a class="link-row__link" href="${escapeHtml(l.url)}" target="_blank" rel="noreferrer"><span class="material-icons">link</span>${escapeHtml(l.url)}</a></li>`).join('');
-  const comments = job.comments || [];
+  const comments = (state.comments || []).filter((c) => c.jobId === job.id)
+    .concat((job.comments || []).map((c) => Object.assign({ legacy: true }, c)));
   const commentsHtml = comments.map((c) => `
     <div class="comment-item">
       <div class="comment-avatar">${escapeHtml((c.author || '?').charAt(0))}</div>
@@ -2913,18 +2919,19 @@ function bindJobDetail() {
     if (!text) { setFlash('กรุณาเขียนความเห็น'); return; }
     const job = state.jobs.find((j) => j.id === selectedJobId);
     if (!job) return;
-    if (!Array.isArray(job.comments)) job.comments = [];
-    job.comments.push({
+    const comment = {
       id: 'c-' + Date.now().toString(36),
+      jobId: selectedJobId,
       author: state.account ? (state.account.name || state.account.username) : 'guest',
       authorUser: state.account ? state.account.username : '',
       authorUid: authUser ? authUser.uid : '',
       text,
       createdAt: new Date().toISOString()
-    });
-    saveState();
-    cloudPush();
+    };
+    state.comments.push(comment);
+    commentInput.value = '';
     render({ noAnim: true });
+    db.collection('comments').doc(comment.id).set(comment).catch(() => setFlash('ส่งคอมเม้นต์ไม่สำเร็จ'));
   }
   if (commentSend) commentSend.addEventListener('click', sendComment);
   document.querySelectorAll('.comment-author').forEach((btn) => {
@@ -2941,8 +2948,7 @@ function bindJobDetail() {
   });
   document.querySelectorAll('[data-comment-edit]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const job = state.jobs.find((j) => j.id === selectedJobId);
-      const c = job && (job.comments || []).find((x) => x.id === btn.dataset.commentEdit);
+      const c = state.comments.find((x) => x.id === btn.dataset.commentEdit);
       if (!c || !canEditComment(c)) return;
       const text = window.prompt('แก้ไขคอมเม้นต์', c.text);
       if (text === null) return;
@@ -2953,8 +2959,7 @@ function bindJobDetail() {
   });
   document.querySelectorAll('[data-comment-delete]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const job = state.jobs.find((j) => j.id === selectedJobId);
-      const c = job && (job.comments || []).find((x) => x.id === btn.dataset.commentDelete);
+      const c = state.comments.find((x) => x.id === btn.dataset.commentDelete);
       if (!c || !canEditComment(c)) return;
       if (!window.confirm('ลบคอมเม้นต์นี้หรือไม่?')) return;
       removeComment(selectedJobId, c.id).then((ok) => { if (ok) render({ noAnim: true }); });
