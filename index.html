@@ -446,6 +446,7 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
 .add-sub { margin: 4px 0 0; font-size: 14px; color: var(--md-sys-color-on-surface-variant); }
 .crop-hint { font-size: 13px; color: var(--md-sys-color-on-surface-variant); margin: 8px 0 0; }
 .crop-preview { width: min(78vw, 320px); aspect-ratio: 1 / 1; margin: 8px auto; border-radius: var(--md-shape-xl); background-color: var(--md-sys-color-surface-variant); background-repeat: no-repeat; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25); touch-action: none; cursor: grab; }
+.crop-preview--banner { width: min(92vw, 420px); aspect-ratio: 16 / 7; }
 .crop-zoom-row { display: flex; align-items: center; gap: 12px; }
 .crop-zoom-row input { flex: 1; accent-color: var(--md-sys-color-primary); }
 #crop-save { margin-top: 8px; }
@@ -827,6 +828,7 @@ let detailFrom = 'dashboard';
 let fabOpen = false;
 let newJobType = 'work';
 let cropSource = '';
+let cropTarget = 'profile';
 let cropZoom = 1;
 let cropX = 0;
 let cropY = 0;
@@ -3010,6 +3012,14 @@ function bindAddJob() {
   document.getElementById('add-back').addEventListener('click', () => go('dashboard'));
 }
 
+function bannerCssOf(src, crop) {
+  if (!src) return '';
+  const sizing = crop
+    ? `background-size: ${Math.round((crop.zoom || 1) * 100)}%; background-position: ${50 + (crop.x || 0) * 100}% ${50 + (crop.y || 0) * 100}%;`
+    : 'background-size: cover; background-position: center;';
+  return `background-image: url(&quot;${escapeHtml(src)}&quot;); ${sizing} background-repeat: no-repeat;`;
+}
+
 function renderViewProfileHtml() {
   const a = viewProfile ? viewProfile.account : null;
   if (!a) return renderHomeHtml();
@@ -3020,9 +3030,8 @@ function renderViewProfileHtml() {
     : 'background-size: cover; background-position: center;';
   const ownAccount = state.account && state.account.username === a.username ? state.account : null;
   const banner = a.profileBanner || (ownAccount && ownAccount.profileBanner) || '';
-  const bannerStyle = banner
-    ? `background-image: url(&quot;${escapeHtml(banner)}&quot;); background-size: cover; background-position: center; background-repeat: no-repeat;`
-    : '';
+  const bannerCrop = a.profileBannerCrop || (ownAccount && ownAccount.profileBannerCrop) || null;
+  const bannerStyle = bannerCssOf(banner, bannerCrop);
   const followed = viewProfile.followedRooms || [];
   const chips = followed.map((f) => `<span class="home-chip">${escapeHtml(f.grade)}/${escapeHtml(f.room)}</span>`).join('');
   const jobs = viewProfile.jobs || [];
@@ -3083,7 +3092,7 @@ function renderProfileHtml() {
   const name = account.name || account.username;
   return `
 <div class="profile-page screen-main--nav">
-  <div class="profile-banner ${account.profileBanner ? 'has-image' : ''}" style="${account.profileBanner ? `background-image: url(&quot;${escapeHtml(account.profileBanner)}&quot;); background-size: cover; background-position: center;` : ''}">
+  <div class="profile-banner ${account.profileBanner ? 'has-image' : ''}" style="${bannerCssOf(account.profileBanner, account.profileBannerCrop)}">
     <span class="banner-blob banner-blob--a" aria-hidden="true"></span>
     <span class="banner-blob banner-blob--b" aria-hidden="true"></span>
     <span class="banner-blob banner-blob--c" aria-hidden="true"></span>
@@ -3298,10 +3307,12 @@ function onBannerChange(ev) {
   if (!files.length) return;
   chatImageToDataUrl(files[0], 1200, 0.78).then((dataUrl) => {
     if (!dataUrl) { setFlash('เพิ่มรูปแบนเนอร์ไม่สำเร็จ'); return; }
-    state.account.profileBanner = dataUrl;
-    saveState();
-    render({ noAnim: true });
-    cloudPush().then((ok) => { if (ok === false) setFlash('บันทึกแบนเนอร์ไม่สำเร็จ — ลองรูปอื่นครับ'); });
+    cropSource = dataUrl;
+    cropTarget = 'banner';
+    cropZoom = 1;
+    cropX = 0;
+    cropY = 0;
+    go('crop');
   });
 }
 
@@ -3314,6 +3325,7 @@ function onProfilePicChange(ev) {
   chatImageToDataUrl(file, 900, 0.82).then((dataUrl) => {
     if (!dataUrl) { setFlash('เพิ่มรูปโปรไฟล์ไม่สำเร็จ'); return; }
     cropSource = dataUrl;
+    cropTarget = 'profile';
     cropZoom = 1;
     cropX = 0;
     cropY = 0;
@@ -3325,12 +3337,12 @@ function renderCropHtml() {
 <div class="top-app-bar">
   <button class="icon-button" id="crop-back"><span class="material-icons">arrow_back</span></button>
   <div class="grow"></div>
-  <h1 class="top-app-bar__title">ครอบรูปภาพ</h1>
+  <h1 class="top-app-bar__title">${cropTarget === 'banner' ? 'ครอบแบนเนอร์' : 'ครอบรูปโปรไฟล์'}</h1>
   <div class="grow"></div>
 </div>
 <main class="screen-main">
   <p class="crop-hint">ลากรูปเพื่อจัดตำแหน่ง และปรับซูมด้านล่าง</p>
-  <div class="crop-preview" id="crop-preview"></div>
+  <div class="crop-preview ${cropTarget === 'banner' ? 'crop-preview--banner' : ''}" id="crop-preview"></div>
   <div class="crop-zoom-row">
     <span class="material-icons">zoom_out</span>
     <input type="range" id="crop-zoom" min="1" max="3" step="0.05" value="${cropZoom}">
@@ -3376,11 +3388,17 @@ function bindCrop() {
   preview.addEventListener('pointercancel', () => { pointer = null; });
 
   document.getElementById('crop-save').addEventListener('click', () => {
-    state.account.profilePic = cropSource;
-    state.account.profilePicCrop = { zoom: cropZoom, x: cropX, y: cropY };
+    if (cropTarget === 'banner') {
+      state.account.profileBanner = cropSource;
+      state.account.profileBannerCrop = { zoom: cropZoom, x: cropX, y: cropY };
+    } else {
+      state.account.profilePic = cropSource;
+      state.account.profilePicCrop = { zoom: cropZoom, x: cropX, y: cropY };
+    }
     saveState();
     navTab = 'profile';
     go('profile');
+    cloudPush().then((ok) => { if (ok === false) setFlash('บันทึกภาพไม่สำเร็จ — ลองรูปอื่นครับ'); });
   });
 }
 
