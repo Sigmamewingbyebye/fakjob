@@ -1208,7 +1208,8 @@ async function cloudPush() {
           profileBanner: state.account.profileBanner || '',
           profilePicCrop: state.account.profilePicCrop || { zoom: 1, x: 0, y: 0 },
           profileBannerCrop: state.account.profileBannerCrop || { zoom: 1, x: 0, y: 0 },
-          followedRooms: state.followedRooms
+          followedRooms: state.followedRooms,
+          likedIds: state.likedIds
         }, { merge: true });
         pushedAccount = sig;
         any = true;
@@ -1541,9 +1542,12 @@ async function onLoginSubmit(e) {
     const credential = await signInUser(username, password);
     authUser = (credential && credential.user) || (auth && auth.currentUser);
     if (!authUser) throw new Error('no auth user');
-    const ownDoc = await db.collection('accounts').doc(username).get();
+    let own = {};
+    try {
+      const ownDoc = await db.collection('accounts').doc(username).get();
+      own = ownDoc.exists ? ownDoc.data() || {} : {};
+    } catch (e) { /* account doc อาจยังอ่านไม่ได้ — ใช้ publicProfiles แทน */ }
     const pubDoc = await db.collection('publicProfiles').doc(username).get();
-    const own = ownDoc.exists ? ownDoc.data() || {} : {};
     const pub = pubDoc.exists ? pubDoc.data() || {} : {};
     const account = Object.assign({ username, name: pub.name || username }, pub, {
       username,
@@ -1555,8 +1559,10 @@ async function onLoginSubmit(e) {
     delete account.followedRooms;
     delete account.likedIds;
     const payload = {
-      followedRooms: Array.isArray(own.followedRooms) ? own.followedRooms : [],
-      likedIds: Array.isArray(own.likedIds) ? own.likedIds : []
+      followedRooms: Array.isArray(own.followedRooms) ? own.followedRooms
+        : (Array.isArray(pub.followedRooms) ? pub.followedRooms : []),
+      likedIds: Array.isArray(own.likedIds) ? own.likedIds
+        : (Array.isArray(pub.likedIds) ? pub.likedIds : [])
     };
     if (account.mustChangePassword) {
       state.account = account;
@@ -1673,7 +1679,7 @@ async function onSignupSubmit(e) {
     await db.collection('publicProfiles').doc(username).set({
       uid, name, profilePic: '', profileBanner: '',
       profilePicCrop: { zoom: 1, x: 0, y: 0 }, profileBannerCrop: { zoom: 1, x: 0, y: 0 },
-      followedRooms: []
+      followedRooms: [], likedIds: []
     });
     state.jobs = [];
     state.followedRooms = [];
