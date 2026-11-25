@@ -293,6 +293,7 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
 .nav-item.active .material-icons { font-variation-settings: 'FILL' 1; animation: m3-nav-icon var(--md-dur-smooth) var(--md-sys-motion-spatial-smooth); }
 @keyframes m3-nav-icon { from { transform: translateX(6px); } to { transform: translateX(0); } }
 .nav-item__label { font-size: 12px; font-weight: 500; white-space: nowrap; min-width: 0; max-width: 96px; overflow: hidden; text-overflow: ellipsis; }
+.nav-item:not(.active) .nav-item__label { display: none; }
 .nav-item.active .nav-item__label {
   font-weight: 700;
   animation: m3-fade var(--md-dur-effects-slow) var(--md-sys-motion-effects-slow),
@@ -606,7 +607,35 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
   }
   .chat-room { max-width: 760px; margin: 0 auto; border-left: 1px solid var(--md-sys-color-outline-variant); border-right: 1px solid var(--md-sys-color-outline-variant); }
   .top-app-bar { border-radius: 0 0 20px 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); }
-  .nav-bar { left: 0; right: 0; width: min(560px, 100%); margin: 0 auto; }
+  /* desktop navigation: vertical rail on the left, revealed on mouse-near */
+  #app { padding-left: 76px; }
+  .nav-bar {
+    left: 12px;
+    right: auto;
+    top: 12px;
+    bottom: auto;
+    width: auto;
+    height: auto;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 4px;
+    padding: 10px 8px;
+    border-radius: var(--md-shape-xl);
+    animation: none;
+    transform: translateX(calc(-100% - 24px));
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 600ms var(--md-sys-motion-spatial-smooth),
+                opacity var(--md-dur-effects-slow) var(--md-sys-motion-effects-slow);
+  }
+  .nav-bar.is-near { transform: translateX(0); opacity: 1; pointer-events: auto; }
+  .nav-item { width: 100%; min-width: 0; flex: 0 0 auto; justify-content: flex-start; }
+  .nav-item__pill { width: 100%; justify-content: flex-start; gap: 10px; padding: 0 12px; }
+  .nav-item.active .nav-item__pill { padding: 0 12px; }
+  .nav-item .nav-item__label { display: inline; max-width: none; font-size: 13px; }
   .room-grid { grid-template-columns: repeat(4, 1fr); }
   .job-form, .detail-main, #home-jobs, #liked-jobs, #history-list, #jobs-list, #view-jobs {
     max-width: 760px;
@@ -979,6 +1008,10 @@ async function cloudPush() {
   updateSyncBadge();
 }
 
+function isDesktopNav() {
+  return !!(window.matchMedia && window.matchMedia('(min-width: 768px)').matches);
+}
+
 function isLiked(job) {
   return state.likedIds.indexOf(job.id) !== -1;
 }
@@ -1330,7 +1363,7 @@ function bottomNavHtml() {
     <button class="nav-item ${navTab === key ? 'active' : ''}" data-nav="${key}" data-label="${label}" aria-label="${label}" ${navTab === key ? 'aria-current="page"' : ''}>
       <span class="nav-item__pill">
         ${navIconHtml(key, icon)}
-        ${navTab === key ? `<span class="nav-item__label t-emph">${label}</span>` : ''}
+        <span class="nav-item__label t-emph">${label}</span>
       </span>
     </button>`).join('')}
 </nav>`;
@@ -1341,19 +1374,8 @@ function setNavActive(key) {
     const active = btn.dataset.nav === key;
     btn.classList.toggle('active', active);
     btn.setAttribute('aria-selected', active ? 'true' : 'false');
-    if (active) {
-      btn.setAttribute('aria-current', 'page');
-      if (!btn.querySelector('.nav-item__label')) {
-        const label = document.createElement('span');
-        label.className = 'nav-item__label t-emph';
-        label.textContent = btn.dataset.label;
-        btn.querySelector('.nav-item__pill').appendChild(label);
-      }
-    } else {
-      btn.removeAttribute('aria-current');
-      const label = btn.querySelector('.nav-item__label');
-      if (label) label.remove();
-    }
+    if (active) btn.setAttribute('aria-current', 'page');
+    else btn.removeAttribute('aria-current');
   });
 }
 
@@ -3017,7 +3039,7 @@ function updateProfileCollapse() {
   banner.style.webkitMaskImage = '';
   banner.style.maskImage = '';
   const navBar = document.getElementById('main-nav');
-  if (navBar) {
+  if (navBar && !isDesktopNav()) {
     const scrollingDown = app.scrollTop > lastProfileScroll;
     navBar.style.transform = app.scrollTop > 60 && scrollingDown ? 'translateY(140%)' : '';
   }
@@ -3194,8 +3216,8 @@ function render(options) {
   }
   const navRoot = document.getElementById('nav-root');
   if (navRoot) {
-    if (screen !== 'profile') {
-      const navBar = document.getElementById('main-nav');
+    const navBar = document.getElementById('main-nav');
+    if (screen !== 'profile' || isDesktopNav()) {
       if (navBar) navBar.style.transform = '';
       lastProfileScroll = 0;
     }
@@ -3255,6 +3277,17 @@ function init() {
     else openProfileView(user, screen, name);
   });
   bindBottomNav();
+  document.addEventListener('mousemove', (e) => {
+    if (!isDesktopNav()) return;
+    const bar = document.getElementById('main-nav');
+    if (!bar) return;
+    const near = e.clientX <= 96 || (e.clientX <= 280 && e.clientY <= 240) || bar.contains(e.target);
+    bar.classList.toggle('is-near', near);
+  });
+  document.addEventListener('mouseleave', () => {
+    const bar = document.getElementById('main-nav');
+    if (bar) bar.classList.remove('is-near');
+  });
   try {
     const join = new URLSearchParams(location.search).get('join');
     if (join) pendingJoin = join;
