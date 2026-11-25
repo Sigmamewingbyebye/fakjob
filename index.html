@@ -6,6 +6,8 @@
 <meta name="theme-color" content="#0061A4">
 <title>fakjob</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <style>
 /* ---- Material Design 3 color tokens (light) ---- */
 :root {
@@ -773,7 +775,15 @@ html[data-color="pink"] {
 'use strict';
 /* ---- state ---- */
 const STORAGE_KEY = 'fak_jobs_v1';
-const FB_URL = 'https://fakjob-1211f-default-rtdb.asia-southeast1.firebasedatabase.app/fakjob';
+const FIREBASE_CONFIG = {
+  apiKey: 'AIzaSyBpsJajZOYI2cdgBLPMiXO0Otjnd-0PvAE',
+  authDomain: 'fakjob-1211f.firebaseapp.com',
+  projectId: 'fakjob-1211f',
+  storageBucket: 'fakjob-1211f.firebasestorage.app',
+  messagingSenderId: '379418688264',
+  appId: '1:379418688264:web:84d234855461b8eba84abd'
+};
+let db = null;
 const SYNC_ROW = 'main';
 const BOOTSTRAP_ACCOUNT = {
   username: 'admin',
@@ -866,37 +876,136 @@ function loadSettings() {
   applySettings();
 }
 
-async function fbAll() {
-  const res = await fetch(FB_URL + '.json');
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  const data = await res.json();
-  if (!data || typeof data !== 'object') return [];
-  return Object.keys(data).map((id) => ({
-    id,
-    payload: data[id] && typeof data[id] === 'object' ? data[id] : {},
-    updated_at: (data[id] && data[id].updated_at) || ''
-  }));
+/* ---- Firestore: realtime listeners, one document per item ---- */
+let cloudReady = false;
+const pushedJobs = {};
+const pushedChats = {};
+const pushedMsgs = {};
+const pushedMsgChat = {};
+let pushedAccount = '';
+let remoteChatMeta = [];
+let remoteMessages = [];
+let remoteAccounts = [];
+let listenersReady = { chats: false, messages: false };
+let jobsSynced = false;
+
+function initFirestore() {
+  try {
+    if (typeof firebase === 'undefined') return false;
+    const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(FIREBASE_CONFIG);
+    db = app.firestore();
+    cloudReady = true;
+    return true;
+  } catch (e) { return false; }
 }
 
-async function sbRequest(path, options) {
-  const opt = options || {};
-  if ((opt.method || 'GET') === 'POST' && opt.body) {
-    const body = JSON.parse(opt.body);
-    const res = await fetch(FB_URL + '/' + encodeURIComponent(body.id) + '.json', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body.payload || {})
+function docData(doc) {
+  return Object.assign({}, doc.data() || {});
+}
+
+function saveLocal() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      account: state.account, jobs: state.jobs, followedRooms: state.followedRooms,
+      likedIds: state.likedIds, chats: state.chats
+    }));
+  } catch (e) {}
+}
+
+function renderAfterRemoteChange() {
+  const focus = document.activeElement;
+  const typing = focus && (focus.tagName === 'INPUT' || focus.tagName === 'TEXTAREA');
+  if (typing) return;
+  if (screen === 'chatRoom') { refreshChatRoom(); return; }
+  if (['home', 'dashboard', 'history', 'profile', 'viewProfile', 'chat', 'newChat'].indexOf(screen) !== -1) {
+    render({ noAnim: true });
+  }
+}
+
+function chatMetaOf(c) {
+  return {
+    type: c.type, privacy: c.privacy, name: c.name,
+    members: Array.isArray(c.members) ? c.members : [],
+    createdBy: c.createdBy || '', createdAt: c.createdAt || ''
+  };
+}
+
+function applyRemoteChats() {
+  if (!listenersReady.chats || !listenersReady.messages) return;
+  const byId = new Map();
+  remoteChatMeta.forEach((c) => byId.set(c.id, Object.assign({}, c, { messages: [] })));
+  remoteMessages.forEach((m) => {
+    const c = byId.get(m.chatId);
+    if (c) c.messages.push(m);
+  });
+  const chats = Array.from(byId.values());
+  chats.forEach((c) => {
+    c.messages.sort((a, b) => String(a.createdAt || '').localeCompare(String(b.createdAt || '')));
+  });
+  if (JSON.stringify(chats) !== JSON.stringify(state.chats)) {
+    state.chats = chats;
+    chats.forEach((c) => {
+      pushedChats[c.id] = JSON.stringify(chatMetaOf(c));
+      c.messages.forEach((m) => {
+        pushedMsgs[m.id] = JSON.stringify(m);
+        pushedMsgChat[m.id] = c.id;
+      });
     });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    return { json: async () => ({}) };
+    saveLocal();
+    renderAfterRemoteChange();
   }
-  const rows = await fbAll();
-  const m = path.match(/id=eq\.([^&]+)/);
-  if (m) {
-    const id = decodeURIComponent(m[1]);
-    return { json: async () => rows.filter((r) => r.id === id).map((r) => ({ id: r.id })) };
-  }
-  return { json: async () => rows };
+  if (pendingJoin) applyPendingJoin();
+}
+
+function startCloudListeners() {
+  if (!cloudReady) return;
+  const fail = () => { syncState = 'off'; updateSyncBadge(); };
+
+  db.collection('jobs').onSnapshot((snap) => {
+    jobsSynced = true;
+    const jobs = snap.docs.map((d) => Object.assign({ id: d.id }, docData(d)));
+    if (JSON.stringify(jobs) !== JSON.stringify(state.jobs)) {
+      state.jobs = jobs;
+      jobs.forEach((j) => { pushedJobs[j.id] = JSON.stringify(j); });
+      Object.keys(pushedJobs).forEach((id) => { if (!jobs.some((j) => j.id === id)) delete pushedJobs[id]; });
+      saveLocal();
+      renderAfterRemoteChange();
+    }
+  }, fail);
+
+  db.collection('chats').onSnapshot((snap) => {
+    remoteChatMeta = snap.docs.map((d) => Object.assign({ id: d.id }, docData(d)));
+    listenersReady.chats = true;
+    applyRemoteChats();
+  }, fail);
+
+  db.collectionGroup('messages').onSnapshot((snap) => {
+    remoteMessages = snap.docs.map((d) => Object.assign({ id: d.id, chatId: d.ref.parent.parent.id }, docData(d)));
+    listenersReady.messages = true;
+    applyRemoteChats();
+  }, fail);
+
+  db.collection('accounts').onSnapshot((snap) => {
+    remoteAccounts = snap.docs.map((d) => Object.assign({ username: d.id }, docData(d)));
+    knownAccounts = remoteAccounts;
+    knownRows = remoteAccounts.map((a) => ({
+      id: a.username,
+      payload: { account: a, followedRooms: Array.isArray(a.followedRooms) ? a.followedRooms : [] }
+    }));
+    if (state.account) {
+      const own = remoteAccounts.find((a) => a.username === state.account.username);
+      if (own && !pushPending) {
+        const acc = Object.assign({}, own);
+        delete acc.followedRooms;
+        delete acc.likedIds;
+        if (JSON.stringify(acc) !== JSON.stringify(state.account)) {
+          state.account = acc;
+          saveLocal();
+        }
+      }
+    }
+    renderAfterRemoteChange();
+  }, fail);
 }
 
 function syncRow() {
@@ -939,82 +1048,13 @@ function mergeChats(local, remote, deleted) {
 }
 
 async function cloudPull() {
-  if (syncing || pushPending) return;
-  syncing = true;
-  try {
-    const before = JSON.stringify({ a: state.account, j: state.jobs, f: state.followedRooms, l: state.likedIds, c: state.chats, dj: state.deletedJobIds, dc: state.deletedChatIds });
-    const res = await sbRequest('fakjob_state?select=id,payload,updated_at');
-    const rows = await res.json();
-    if (rows.length) {
-      const shared = rows.find((r) => r.id === 'jobs');
-      const chatsRow = rows.find((r) => r.id === 'chats');
-      const ownRow = rows.find((r) => r.id === syncRow());
-      const legacy = rows.find((r) => r.id === SYNC_ROW);
-
-      const fresh = (row) => !lastLocalChange || (Date.parse(row.updated_at) || 0) >= lastLocalChange;
-      const ownFresh = ownRow && fresh(ownRow);
-      const remoteDeletedJobs = shared && Array.isArray(shared.payload.deletedJobIds) ? shared.payload.deletedJobIds : [];
-      const remoteDeletedChats = chatsRow && Array.isArray(chatsRow.payload.deletedChatIds) ? chatsRow.payload.deletedChatIds : [];
-      state.deletedJobIds = Array.from(new Set(state.deletedJobIds.concat(remoteDeletedJobs)));
-      state.deletedChatIds = Array.from(new Set(state.deletedChatIds.concat(remoteDeletedChats)));
-      state.jobs = mergeJobs(state.jobs, shared && Array.isArray(shared.payload.jobs) ? shared.payload.jobs : [], state.deletedJobIds);
-      state.chats = mergeChats(state.chats, chatsRow && Array.isArray(chatsRow.payload.chats) ? chatsRow.payload.chats : [], state.deletedChatIds);
-      if (pendingJoin) applyPendingJoin();
-      knownRows = rows;
-      knownAccounts = rows
-        .filter((r) => r.payload && r.payload.account && r.payload.account.username)
-        .map((r) => r.payload.account);
-      if (state.account && !knownAccounts.some((a) => a.username === state.account.username)) knownAccounts.push(state.account);
-      const sig = knownAccounts.map((a) => [a.username, a.name, (a.profilePic || '').length, (a.profileBanner || '').length].join(':')).join('|');
-      const accountsChanged = sig !== accountsSig;
-      accountsSig = sig;
-      if (accountsChanged && screen === 'viewProfile' && viewProfile && viewProfile.account) {
-        const freshRow = findProfileRow(viewProfile.account.username, viewProfile.account.name);
-        if (freshRow && freshRow.payload && freshRow.payload.account) setViewProfile(freshRow);
-      }
-      if (ownFresh) {
-        state.followedRooms = Array.isArray(ownRow.payload.followedRooms) ? ownRow.payload.followedRooms : [];
-        state.likedIds = Array.isArray(ownRow.payload.likedIds) ? ownRow.payload.likedIds : [];
-      }
-
-      const ownAccount = ownRow && ownRow.payload.account;
-      const legacyAccount = !state.account && legacy && legacy.payload.account;
-      const accPayload = ownAccount || legacyAccount;
-      if (accPayload && (!state.account || accPayload.username === state.account.username)) {
-        state.account = accPayload;
-        if (!ownAccount && state.account.username) {
-          syncUser = state.account.username;
-          cloudPush();
-        }
-        if (screen === 'login' || screen === 'signup') {
-          navTab = 'home';
-          screen = 'home';
-          render();
-          applyPendingJoin();
-        }
-      }
-      if (!shared && ownRow && Array.isArray(ownRow.payload.jobs) && ownRow.payload.jobs.length) {
-        state.jobs = ownRow.payload.jobs;
-        cloudPush();
-      }
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        account: state.account, jobs: state.jobs, followedRooms: state.followedRooms, likedIds: state.likedIds,
-        chats: state.chats, deletedJobIds: state.deletedJobIds, deletedChatIds: state.deletedChatIds
-      }));
-      syncState = 'on';
-      const safeScreen = screen === 'dashboard' || screen === 'home' || screen === 'history'
-        || screen === 'profile' || screen === 'viewProfile' || screen === 'chat' || screen === 'newChat';
-      const focus = document.activeElement;
-      const typing = focus && (focus.tagName === 'INPUT' || focus.tagName === 'TEXTAREA');
-      const changed = before !== JSON.stringify({ a: state.account, j: state.jobs, f: state.followedRooms, l: state.likedIds, c: state.chats, dj: state.deletedJobIds, dc: state.deletedChatIds });
-      if (changed && !accountsChanged && screen === 'chatRoom') refreshChatRoom();
-      else if ((changed || accountsChanged) && (safeScreen || screen === 'chatRoom') && !typing) render({ noAnim: true });
-    }
-  } catch (e) {
-    syncState = 'off';
+  if (!cloudReady) initFirestore();
+  if (cloudReady && !cloudPull.started) {
+    cloudPull.started = true;
+    syncState = 'on';
+    startCloudListeners();
+    updateSyncBadge();
   }
-  syncing = false;
-  updateSyncBadge();
 }
 
 function scheduleCloudPush() {
@@ -1024,19 +1064,82 @@ function scheduleCloudPush() {
 }
 
 async function cloudPush() {
-  if (!state.account && !syncUser) { pushPending = false; return; }
+  if (!cloudReady) initFirestore();
+  if (!cloudReady || !db || (!state.account && !syncUser)) { pushPending = false; return; }
   try {
-    const now = new Date().toISOString();
-    const post = (id, payload) => sbRequest('fakjob_state', {
-      method: 'POST',
-      headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
-      body: JSON.stringify({ id, payload: Object.assign({}, payload, { updated_at: now }) })
+    const batch = db.batch();
+    let any = false;
+
+    state.jobs.forEach((j) => {
+      const sig = JSON.stringify(j);
+      if (pushedJobs[j.id] !== sig) {
+        const data = Object.assign({}, j);
+        delete data.id;
+        batch.set(db.collection('jobs').doc(j.id), data);
+        pushedJobs[j.id] = sig;
+        any = true;
+      }
     });
-    await Promise.all([
-      post('jobs', { jobs: state.jobs, deletedJobIds: state.deletedJobIds }),
-      post('chats', { chats: state.chats, deletedChatIds: state.deletedChatIds }),
-      post(syncRow(), { account: state.account, followedRooms: state.followedRooms, likedIds: state.likedIds })
-    ]);
+    if (jobsSynced) {
+      Object.keys(pushedJobs).forEach((id) => {
+        if (!state.jobs.some((j) => j.id === id)) {
+          batch.delete(db.collection('jobs').doc(id));
+          delete pushedJobs[id];
+          any = true;
+        }
+      });
+    }
+
+    state.chats.forEach((c) => {
+      const meta = chatMetaOf(c);
+      const sig = JSON.stringify(meta);
+      if (pushedChats[c.id] !== sig) {
+        batch.set(db.collection('chats').doc(c.id), meta);
+        pushedChats[c.id] = sig;
+        any = true;
+      }
+      (c.messages || []).forEach((m) => {
+        const msig = JSON.stringify(m);
+        if (pushedMsgs[m.id] !== msig) {
+          const data = Object.assign({}, m);
+          batch.set(db.collection('chats').doc(c.id).collection('messages').doc(m.id), data);
+          pushedMsgs[m.id] = msig;
+          pushedMsgChat[m.id] = c.id;
+          any = true;
+        }
+      });
+    });
+    if (listenersReady.chats && listenersReady.messages) {
+      Object.keys(pushedChats).forEach((id) => {
+        if (!state.chats.some((c) => c.id === id)) {
+        Object.keys(pushedMsgChat).forEach((mid) => {
+          if (pushedMsgChat[mid] === id) {
+            batch.delete(db.collection('chats').doc(id).collection('messages').doc(mid));
+            delete pushedMsgs[mid];
+            delete pushedMsgChat[mid];
+          }
+        });
+        batch.delete(db.collection('chats').doc(id));
+        delete pushedChats[id];
+        any = true;
+        }
+      });
+    }
+
+    if (state.account) {
+      const acc = Object.assign({}, state.account, {
+        followedRooms: state.followedRooms, likedIds: state.likedIds
+      });
+      const sig = JSON.stringify(acc);
+      if (pushedAccount !== sig) {
+        const data = Object.assign({}, acc);
+        delete data.username;
+        batch.set(db.collection('accounts').doc(state.account.username), data, { merge: true });
+        pushedAccount = sig;
+        any = true;
+      }
+    }
+    if (any) await batch.commit();
     syncState = 'on';
   } catch (e) {
     syncState = 'off';
@@ -1283,15 +1386,26 @@ async function onLoginSubmit(e) {
   let account = state.account && state.account.username === username ? state.account : null;
   let cloudPayload = null;
   try {
-    const res = await sbRequest('fakjob_state?select=id,payload');
-    const rows = await res.json();
-    const own = rows.find((r) => r.id === username && r.payload && r.payload.account);
-    const shared = rows.find((r) => r.id === 'jobs');
-    if (own) {
-      cloudPayload = { ...own.payload, jobs: shared && Array.isArray(shared.payload.jobs) ? shared.payload.jobs : [] };
-      account = own.payload.account;
+    if (!cloudReady) initFirestore();
+    if (cloudReady) {
+      const ownDoc = await db.collection('accounts').doc(username).get();
+      if (ownDoc.exists) {
+        const payload = ownDoc.data() || {};
+        const acc = Object.assign({}, payload);
+        delete acc.followedRooms;
+        delete acc.likedIds;
+        account = acc;
+        cloudPayload = {
+          account: acc,
+          followedRooms: Array.isArray(payload.followedRooms) ? payload.followedRooms : [],
+          likedIds: Array.isArray(payload.likedIds) ? payload.likedIds : []
+        };
+        pushedAccount = JSON.stringify(Object.assign({}, acc, {
+          followedRooms: cloudPayload.followedRooms, likedIds: cloudPayload.likedIds
+        }));
+      }
     }
-  } catch (err) { /* ใช้อมูลในเครื่องเมื่อออฟไลน์ */ }
+  } catch (err) { /* ใช้ข้อมูลในเครื่องเมื่อออฟไลน์ */ }
 
   if (!account && username === BOOTSTRAP_ACCOUNT.username) account = BOOTSTRAP_ACCOUNT;
   if (!account) { setFlash('ไม่พบบัญชีนี้'); return; }
@@ -1300,7 +1414,6 @@ async function onLoginSubmit(e) {
     return;
   }
   if (cloudPayload) {
-    state.jobs = Array.isArray(cloudPayload.jobs) ? cloudPayload.jobs : [];
     state.followedRooms = Array.isArray(cloudPayload.followedRooms) ? cloudPayload.followedRooms : [];
     state.likedIds = Array.isArray(cloudPayload.likedIds) ? cloudPayload.likedIds : [];
   }
@@ -1354,9 +1467,11 @@ async function onSignupSubmit(e) {
   if (password.length < 4) { setFlash('รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร'); return; }
   if (state.account && state.account.username === username) { setFlash('Username นี้ใช้แล้ว'); return; }
   try {
-    const res = await sbRequest('fakjob_state?id=eq.' + encodeURIComponent(username) + '&select=id');
-    const rows = await res.json();
-    if (rows.length) { setFlash('Username นี้ใช้แล้ว'); return; }
+    if (!cloudReady) initFirestore();
+    if (cloudReady) {
+      const doc = await db.collection('accounts').doc(username).get();
+      if (doc.exists) { setFlash('Username นี้ใช้แล้ว'); return; }
+    }
   } catch (err) { /* อนุญาตสร้างบัญชีแบบออฟไลน์ */ }
   state.account = { username, name, passwordHash: hashStr(password), profilePic: '', profilePicCrop: { zoom: 1, x: 0, y: 0 }, profileBanner: '' };
   state.jobs = [];
@@ -1608,13 +1723,14 @@ function setViewProfile(row) {
 async function fetchProfileRow(username, from) {
   if (!username) return;
   try {
-    const res = await fetch(FB_URL + '/' + encodeURIComponent(username) + '.json');
-    if (!res.ok) return;
-    const payload = await res.json();
-    if (!payload || typeof payload !== 'object' || !payload.account) return;
-    const row = { id: username, payload };
+    if (!cloudReady) initFirestore();
+    if (!cloudReady) return;
+    const doc = await db.collection('accounts').doc(username).get();
+    if (!doc.exists) return;
+    const acc = Object.assign({ username }, doc.data() || {});
+    const row = { id: username, payload: { account: acc, followedRooms: acc.followedRooms || [] } };
     knownRows = knownRows.filter((r) => r.id !== username).concat(row);
-    if (!knownAccounts.some((a) => a.username === username)) knownAccounts.push(payload.account);
+    if (!knownAccounts.some((a) => a.username === username)) knownAccounts.push(acc);
     viewFrom = from || screen;
     setViewProfile(row);
     go('viewProfile');
@@ -2793,7 +2909,11 @@ function bindAddJob() {
     if (!files.length) return;
     const list = document.getElementById('job-files-list');
     files.forEach((file) => {
-      fileToDataUrl(file).then((dataUrl) => {
+      if ((file.size || 0) > 3 * 1024 * 1024) { setFlash('ไฟล์ใหญ่เกิน 3MB ข้ามไฟล์นี้'); return; }
+      const read = (file.type || '').startsWith('image/')
+        ? chatImageToDataUrl(file, 1280, 0.8)
+        : fileToDataUrl(file);
+      read.then((dataUrl) => {
         if (!dataUrl) return;
         const row = document.createElement('div');
         row.className = 'file-row';
@@ -3166,7 +3286,7 @@ function onBannerChange(ev) {
   const files = Array.from(input.files || []);
   input.value = '';
   if (!files.length) return;
-  fileToDataUrl(files[0]).then((dataUrl) => {
+  chatImageToDataUrl(files[0], 1200, 0.78).then((dataUrl) => {
     if (!dataUrl) { setFlash('เพิ่มรูปแบนเนอร์ไม่สำเร็จ'); return; }
     state.account.profileBanner = dataUrl;
     saveState();
@@ -3180,7 +3300,7 @@ function onProfilePicChange(ev) {
   input.value = '';
   if (!files.length) return;
   const file = files[0];
-  fileToDataUrl(file).then((dataUrl) => {
+  chatImageToDataUrl(file, 900, 0.82).then((dataUrl) => {
     if (!dataUrl) { setFlash('เพิ่มรูปโปรไฟล์ไม่สำเร็จ'); return; }
     cropSource = dataUrl;
     cropZoom = 1;
@@ -3298,8 +3418,8 @@ function render(options) {
 function init() {
   loadSettings();
   loadState();
+  initFirestore();
   cloudPull();
-  setInterval(cloudPull, 3000);
   document.getElementById('nav-root').innerHTML = bottomNavHtml();
   document.body.insertAdjacentHTML('beforeend', `
 <div class="poster-scrim" id="poster-dialog" hidden>
