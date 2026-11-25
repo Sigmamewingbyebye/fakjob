@@ -467,6 +467,7 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
 .comment-body { flex: 1; min-width: 0; }
 .comment-meta { font-size: 11px; color: var(--md-sys-color-on-surface-variant); }
 .comment-author { border: none; background: transparent; padding: 0; font: inherit; font-weight: 500; color: var(--md-sys-color-primary); cursor: pointer; }
+.comment-action { border: none; background: transparent; padding: 0 4px; font: inherit; font-size: 11px; color: var(--md-sys-color-primary); cursor: pointer; text-decoration: underline; }
 .comment-text { font-size: 14px; color: var(--md-sys-color-on-surface); margin-top: 2px; overflow-wrap: anywhere; white-space: pre-wrap; }
 .poster-chip { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: none; background: transparent; color: var(--md-sys-color-on-surface-variant); font: inherit; font-size: 11px; cursor: pointer; }
 .poster-avatar { width: 20px; height: 20px; border-radius: var(--md-shape-full); display: inline-flex; align-items: center; justify-content: center; background-color: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); background-size: cover; background-position: center; background-repeat: no-repeat; font-size: 11px; flex-shrink: 0; }
@@ -1371,6 +1372,36 @@ function matchesSearch(job) {
   const q = jobSearch.toLowerCase();
   return [job.title, job.content, job.subject, job.subjectOther, job.postedByName]
     .some((v) => String(v || '').toLowerCase().indexOf(q) !== -1);
+}
+
+function canEditComment(c) {
+  return !!(c && c.authorUid && authUser && c.authorUid === authUser.uid);
+}
+
+async function updateJobComments(jobId, updater) {
+  const job = state.jobs.find((j) => j.id === jobId);
+  if (!job) return false;
+  if (!Array.isArray(job.comments)) job.comments = [];
+  const next = updater(job.comments);
+  if (!next) return false;
+  try {
+    await db.collection('jobs').doc(jobId).update({ comments: next });
+    job.comments = next;
+    saveLocal();
+    return true;
+  } catch (e) {
+    setFlash('แก้ไขคอมเม้นต์ไม่สำเร็จ');
+    return false;
+  }
+}
+
+function patchComment(jobId, commentId, text) {
+  return updateJobComments(jobId, (comments) => comments.map((c) =>
+    c.id === commentId ? Object.assign({}, c, { text, editedAt: new Date().toISOString() }) : c));
+}
+
+function removeComment(jobId, commentId) {
+  return updateJobComments(jobId, (comments) => comments.filter((c) => c.id !== commentId));
 }
 
 function statusOf(job) {
@@ -2666,7 +2697,7 @@ function renderJobDetailHtml(job) {
     <div class="comment-item">
       <div class="comment-avatar">${escapeHtml((c.author || '?').charAt(0))}</div>
       <div class="comment-body">
-        <div class="comment-meta"><button type="button" class="comment-author" data-comment-user="${escapeHtml(c.authorUser || '')}" data-comment-name="${escapeHtml(c.author)}">${escapeHtml(c.author)}</button> · ${fmtDateTime(c.createdAt)}</div>
+        <div class="comment-meta"><button type="button" class="comment-author" data-comment-user="${escapeHtml(c.authorUser || '')}" data-comment-name="${escapeHtml(c.author)}">${escapeHtml(c.author)}</button> · ${fmtDateTime(c.createdAt)}${c.editedAt ? ' · แก้ไขแล้ว' : ''}${canEditComment(c) ? ` <button type="button" class="comment-action" data-comment-edit="${escapeHtml(c.id)}" aria-label="แก้ไขคอมเม้นต์">แก้ไข</button> <button type="button" class="comment-action" data-comment-delete="${escapeHtml(c.id)}" aria-label="ลบคอมเม้นต์">ลบ</button>` : ''}</div>
         <div class="comment-text">${escapeHtml(c.text)}</div>
       </div>
     </div>`).join('');
@@ -2906,6 +2937,27 @@ function bindJobDetail() {
       }
       const ok = await openProfileView(user, 'jobDetail', name);
       if (!ok) openProfileByName(name, 'jobDetail');
+    });
+  });
+  document.querySelectorAll('[data-comment-edit]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const job = state.jobs.find((j) => j.id === selectedJobId);
+      const c = job && (job.comments || []).find((x) => x.id === btn.dataset.commentEdit);
+      if (!c || !canEditComment(c)) return;
+      const text = window.prompt('แก้ไขคอมเม้นต์', c.text);
+      if (text === null) return;
+      const value = text.trim();
+      if (!value) return;
+      patchComment(selectedJobId, c.id, value).then((ok) => { if (ok) render({ noAnim: true }); });
+    });
+  });
+  document.querySelectorAll('[data-comment-delete]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const job = state.jobs.find((j) => j.id === selectedJobId);
+      const c = job && (job.comments || []).find((x) => x.id === btn.dataset.commentDelete);
+      if (!c || !canEditComment(c)) return;
+      if (!window.confirm('ลบคอมเม้นต์นี้หรือไม่?')) return;
+      removeComment(selectedJobId, c.id).then((ok) => { if (ok) render({ noAnim: true }); });
     });
   });
   if (commentInput) commentInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendComment(); });
