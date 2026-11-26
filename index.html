@@ -1201,16 +1201,18 @@ async function cloudPush() {
         const data = Object.assign({}, acc);
         delete data.username;
         batch.set(db.collection('accounts').doc(state.account.username), data, { merge: true });
-        batch.set(db.collection('publicProfiles').doc(state.account.username), {
-          uid: state.account.uid || (authUser && authUser.uid) || '',
-          name: state.account.name || state.account.username,
-          profilePic: state.account.profilePic || '',
-          profileBanner: state.account.profileBanner || '',
-          profilePicCrop: state.account.profilePicCrop || { zoom: 1, x: 0, y: 0 },
-          profileBannerCrop: state.account.profileBannerCrop || { zoom: 1, x: 0, y: 0 },
-          followedRooms: state.followedRooms,
-          likedIds: state.likedIds
-        }, { merge: true });
+        if (!restoringProfile) {
+          batch.set(db.collection('publicProfiles').doc(state.account.username), {
+            uid: state.account.uid || (authUser && authUser.uid) || '',
+            name: state.account.name || state.account.username,
+            profilePic: state.account.profilePic || '',
+            profileBanner: state.account.profileBanner || '',
+            profilePicCrop: state.account.profilePicCrop || { zoom: 1, x: 0, y: 0 },
+            profileBannerCrop: state.account.profileBannerCrop || { zoom: 1, x: 0, y: 0 },
+            followedRooms: state.followedRooms,
+            likedIds: state.likedIds
+          }, { merge: true });
+        }
         pushedAccount = sig;
         any = true;
       }
@@ -1483,6 +1485,46 @@ function chatImageToDataUrl(file, maxSize, quality) {
     reader.readAsDataURL(file);
   });
 }
+let restoringProfile = false;
+
+async function restoreProfileFromLegacy(username) {
+  if (!username || !cloudReady || !authUser || !state.account) return;
+  if (state.account.profilePic || state.account.profileBanner) return;
+  restoringProfile = true;
+  try {
+    const res = await fetch('https://fakjob-1211f-default-rtdb.asia-southeast1.firebasedatabase.app/fakjob/'
+      + encodeURIComponent(username) + '.json');
+    if (!res.ok) return;
+    const legacy = await res.json();
+    if (!legacy || !legacy.account) return;
+    const acc = legacy.account;
+    const patch = {
+      profilePic: acc.profilePic || '',
+      profilePicCrop: acc.profilePicCrop || { zoom: 1, x: 0, y: 0 },
+      profileBanner: '',
+      profileBannerCrop: acc.profileBannerCrop || { zoom: 1, x: 0, y: 0 },
+      followedRooms: Array.isArray(legacy.followedRooms) ? legacy.followedRooms : [],
+      likedIds: Array.isArray(legacy.likedIds) ? legacy.likedIds : []
+    };
+    if (acc.profileBanner && String(acc.profileBanner).length > 650000) {
+      try {
+        const blob = await (await fetch(acc.profileBanner)).blob();
+        patch.profileBanner = await chatImageToDataUrl(
+          new File([blob], 'banner.jpg', { type: 'image/jpeg' }), 1200, 0.78);
+      } catch (e) { patch.profileBanner = ''; }
+    } else {
+      patch.profileBanner = acc.profileBanner || '';
+    }
+    Object.assign(state.account, patch);
+    state.followedRooms = patch.followedRooms;
+    state.likedIds = patch.likedIds;
+    saveLocal();
+    await db.collection('publicProfiles').doc(username).set(patch, { merge: true });
+    if (screen === 'profile' || screen === 'viewProfile') render({ noAnim: true });
+  } catch (e) { /* ข้อมูลเดิมไม่มี — ปล่อยให้ตั้งใหม่ */ }
+  restoringProfile = false;
+}
+
 function finishAuth(account, payload) {
   if (payload) {
     state.followedRooms = Array.isArray(payload.followedRooms) ? payload.followedRooms : [];
@@ -1498,6 +1540,7 @@ function finishAuth(account, payload) {
   saveState();
   render();
   applyPendingJoin();
+  restoreProfileFromLegacy(account.username);
 }
 
 function renderLoginHtml() {
