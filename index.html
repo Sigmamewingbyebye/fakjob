@@ -2251,9 +2251,33 @@ function openChatRoom(chat) {
   go('chatRoom');
 }
 
-function startDirectChat(username, name) {
+async function mergeDuplicateDirectChats(username) {
+  const matches = state.chats.filter((c) => c.type === 'direct'
+    && (c.members || []).indexOf(me()) !== -1
+    && (c.members || []).indexOf(username) !== -1);
+  if (!matches.length) return null;
+  const sortedDuplicates = matches.slice().sort((a, b) =>
+    String(a.createdAt || '').localeCompare(String(b.createdAt || '')));
+  const keep = sortedDuplicates[0];
+  for (const c of sortedDuplicates.slice(1)) {
+    try {
+      if (db) {
+        const ms = await db.collection('chats').doc(c.id).collection('messages').get();
+        await Promise.all(ms.docs.map((d) => d.ref.delete()));
+        await db.collection('chats').doc(c.id).delete();
+      }
+    } catch (e) { setFlash('รวมแชทซ้ำไม่สำเร็จ'); }
+    state.chats = state.chats.filter((x) => x.id !== c.id);
+    delete pushedChats[c.id];
+  }
+  if (sortedDuplicates.length > 1) saveState();
+  return keep;
+}
+
+async function startDirectChat(username, name) {
   if (!state.account || !username || username === me()) return;
-  let chat = state.chats.find((c) => c.type === 'direct'
+  const existing = await mergeDuplicateDirectChats(username);
+  let chat = existing || state.chats.find((c) => c.type === 'direct'
     && (c.members || []).indexOf(me()) !== -1
     && (c.members || []).indexOf(username) !== -1);
   if (!chat) {
