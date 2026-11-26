@@ -690,6 +690,10 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
   #history-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
   #history-list .job-card { max-width: none; margin: 0; }
 }
+@media (min-width: 768px) and (hover: none) {
+  .nav-bar { transform: translateY(0); opacity: 1; pointer-events: auto; }
+  .nav-hint { display: none; }
+}
 @media (min-width: 1280px) {
   .room-grid { grid-template-columns: repeat(6, 1fr); gap: 16px; }
   .room-card { width: 100%; max-width: 170px; justify-self: center; }
@@ -2262,6 +2266,7 @@ function renderMessagesHtml(chat) {
 
 function openChatRoom(chat) {
   if (!chat) return;
+  clearReply();
   currentChatId = chat.id;
   navTab = 'chat';
   go('chatRoom');
@@ -2355,14 +2360,15 @@ function sendChatMessage() {
   const text = input.value.trim();
   if (!text) return;
   if (!Array.isArray(chat.messages)) chat.messages = [];
-  chat.messages.push({
+  const msg = {
     id: 'msg-' + Date.now().toString(36),
     sender: me(),
     senderName: state.account.name || me(),
     text,
-    replyTo: replyTarget ? Object.assign({}, replyTarget) : undefined,
     createdAt: new Date().toISOString()
-  });
+  };
+  if (replyTarget) msg.replyTo = Object.assign({}, replyTarget);
+  chat.messages.push(msg);
   input.value = '';
   input.style.height = '';
   clearReply();
@@ -2383,9 +2389,9 @@ function sendChatFile(dataUrl, fileName, fileType, isImage) {
     text: caption,
     fileName: fileName || '',
     fileType: fileType || '',
-    replyTo: replyTarget ? Object.assign({}, replyTarget) : undefined,
     createdAt: new Date().toISOString()
   };
+  if (replyTarget) msg.replyTo = Object.assign({}, replyTarget);
   if (isImage) msg.image = dataUrl;
   else msg.file = dataUrl;
   chat.messages.push(msg);
@@ -2419,6 +2425,7 @@ function refreshChatRoom() {
     box.innerHTML = renderMessagesHtml(chat);
     box.scrollTop = box.scrollHeight;
     bindChatImages();
+    bindChatRoomControls();
   }
   const title = document.getElementById('chat-room-title');
   if (title) title.textContent = chatTitle(chat);
@@ -2610,9 +2617,7 @@ function bindChat() {
   bindBottomNav();
 }
 
-function bindChatRoom() {
-  const back = document.getElementById('chat-back');
-  if (back) back.addEventListener('click', () => go('chat'));
+function bindChatRoomControls() {
   document.querySelectorAll('[data-react]').forEach((el) => {
     const react = () => toggleReaction(currentChatId, el.dataset.react, el.dataset.emoji);
     el.addEventListener('click', (e) => { e.stopPropagation(); react(); });
@@ -2636,6 +2641,12 @@ function bindChatRoom() {
   });
   const cancelReply = document.getElementById('reply-cancel');
   if (cancelReply) cancelReply.addEventListener('click', clearReply);
+}
+
+function bindChatRoom() {
+  const back = document.getElementById('chat-back');
+  if (back) back.addEventListener('click', () => go('chat'));
+  bindChatRoomControls();
   const form = document.getElementById('chat-form');
   if (form) form.addEventListener('submit', (e) => { e.preventDefault(); sendChatMessage(); });
   const input = document.getElementById('chat-input');
