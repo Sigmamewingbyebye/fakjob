@@ -1003,6 +1003,17 @@ function startCloudListeners() {
   if (!cloudReady) return;
   const fail = () => { syncState = 'off'; updateSyncBadge(); };
 
+  const watchChatMessages = (id) => {
+    if (messageListeners[id]) return;
+    messageListeners[id] = true;
+    listen(db.collection('chats').doc(id).collection('messages'), (snap) => {
+      const docs = snap.docs.map((d) => Object.assign({ id: d.id, chatId: id }, docData(d)));
+      remoteMessages = remoteMessages.filter((m) => m.chatId !== id).concat(docs);
+      listenersReady.messages = true;
+      applyRemoteChats();
+    }, fail);
+  };
+
   listen(db.collection('jobs'), (snap) => {
     jobsSynced = true;
     const jobs = snap.docs.map((d) => Object.assign({ id: d.id }, docData(d)));
@@ -1017,12 +1028,8 @@ function startCloudListeners() {
 
   listen(db.collection('chats'), (snap) => {
     remoteChatMeta = snap.docs.map((d) => Object.assign({ id: d.id }, docData(d)));
+    remoteChatMeta.forEach((c) => watchChatMessages(c.id));
     listenersReady.chats = true;
-    applyRemoteChats();
-  }, fail);
-
-  listen(db.collectionGroup('messages'), (snap) => {
-    remoteMessages = snap.docs.map((d) => Object.assign({ id: d.id, chatId: d.ref.parent.parent.id }, docData(d)));
     listenersReady.messages = true;
     applyRemoteChats();
   }, fail);
@@ -1103,10 +1110,13 @@ function mergeChats(local, remote, deleted) {
 }
 
 let listenerUnsubs = [];
+const messageListeners = {};
 
 function stopCloudListeners() {
   listenerUnsubs.forEach((fn) => { try { fn(); } catch (e) {} });
   listenerUnsubs = [];
+  Object.keys(messageListeners).forEach((k) => delete messageListeners[k]);
+  listenersReady.messages = false;
   cloudPull.started = false;
 }
 
