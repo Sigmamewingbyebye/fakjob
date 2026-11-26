@@ -549,7 +549,10 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
 .chat-reply { display: inline-flex; cursor: pointer; opacity: 0.55; }
 .chat-reply:hover, .chat-reply:focus { opacity: 1; }
 .chat-reply .material-icons { font-size: 16px; }
-.chat-reactions { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+.chat-reactions { display: none; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+.chat-reactions.is-open { display: flex; }
+.chat-reaction-summary { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+.chat-reaction-summary .chat-reaction { pointer-events: none; }
 .chat-reaction { display: inline-flex; align-items: center; gap: 2px; padding: 2px 6px; border-radius: var(--md-shape-full); background: var(--md-sys-color-surface-container); font-size: 14px; cursor: pointer; opacity: 0.6; }
 .chat-reaction:hover, .chat-reaction:focus { opacity: 1; }
 .chat-reaction.is-mine { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); opacity: 1; }
@@ -2211,6 +2214,8 @@ function fmtChatTime(iso) {
 }
 
 let replyTarget = null;
+let activeReactionMsgId = null;
+let longPressTimer = null;
 const REACTIONS = ['❤️','👍','😂','😮','😢'];
 
 async function toggleReaction(chatId, msgId, emoji) {
@@ -2226,6 +2231,7 @@ async function toggleReaction(chatId, msgId, emoji) {
   else reactions[emoji] = users;
   try {
     await db.collection('chats').doc(chatId).collection('messages').doc(msgId).update({ reactions });
+    closeReactionPicker();
   } catch (e) { setFlash('ใส่ความรู้สึกไม่สำเร็จ'); }
 }
 
@@ -2254,7 +2260,8 @@ function renderMessagesHtml(chat) {
         ${m.file ? `<a class="chat-bubble__file" href="${escapeHtml(m.file)}" download="${escapeHtml(m.fileName || 'file')}"><span class="material-icons">description</span><span>${escapeHtml(m.fileName || 'ไฟล์')}</span></a>` : ''}
         ${m.text ? `<div class="chat-bubble__text">${escapeHtml(m.text)}</div>` : ''}
         <div class="chat-bubble__bottom"><span class="chat-bubble__time">${fmtChatTime(m.createdAt)}</span><span class="chat-reply" data-reply="${escapeHtml(m.id)}" role="button" tabindex="0" aria-label="ตอบกลับ"><span class="material-icons">reply</span></span></div>
-        <div class="chat-reactions">${REACTIONS.map((e) => {
+        ${(m.reactions && Object.keys(m.reactions).length) ? `<div class="chat-reaction-summary">${Object.keys(m.reactions).map((e) => `<span class="chat-reaction is-mine">${e}<small>${(m.reactions[e] || []).length}</small></span>`).join('')}</div>` : ''}
+        <div class="chat-reactions ${activeReactionMsgId === m.id ? 'is-open' : ''}">${REACTIONS.map((e) => {
           const users = (m.reactions && m.reactions[e]) || [];
           const mine = authUser && users.indexOf(authUser.uid) !== -1;
           return `<span class="chat-reaction ${mine ? 'is-mine' : ''}" data-react="${escapeHtml(m.id)}" data-emoji="${escapeHtml(e)}" role="button" tabindex="0">${e}${users.length ? `<small>${users.length}</small>` : ''}</span>`;
@@ -2617,7 +2624,42 @@ function bindChat() {
   bindBottomNav();
 }
 
+function closeReactionPicker() {
+  if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+  if (!activeReactionMsgId) return;
+  activeReactionMsgId = null;
+  document.querySelectorAll('.chat-reactions.is-open').forEach((el) => el.classList.remove('is-open'));
+}
+
 function bindChatRoomControls() {
+  document.querySelectorAll('.chat-bubble[data-msg-id]').forEach((bubble) => {
+    bubble.addEventListener('pointerdown', (e) => {
+      const msgId = bubble.dataset.msgId;
+      bubble.dataset.lpX = String(e.clientX);
+      bubble.dataset.lpY = String(e.clientY);
+      longPressTimer = setTimeout(() => {
+        longPressTimer = null;
+        if (activeReactionMsgId && activeReactionMsgId !== msgId) closeReactionPicker();
+        activeReactionMsgId = msgId;
+        const picker = bubble.querySelector('.chat-reactions');
+        if (picker) picker.classList.add('is-open');
+      }, 450);
+    });
+    bubble.addEventListener('pointermove', (e) => {
+      const dx = Math.abs(e.clientX - Number(bubble.dataset.lpX || 0));
+      const dy = Math.abs(e.clientY - Number(bubble.dataset.lpY || 0));
+      if (dx > 8 || dy > 8) closeReactionPicker();
+    });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach((type) => {
+      bubble.addEventListener(type, () => {
+        if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+      });
+    });
+  });
+  const messages = document.getElementById('chat-messages');
+  if (messages) messages.onclick = (e) => {
+    if (!e.target.closest('.chat-reactions') && !e.target.closest('.chat-bubble')) closeReactionPicker();
+  };
   document.querySelectorAll('[data-react]').forEach((el) => {
     const react = () => toggleReaction(currentChatId, el.dataset.react, el.dataset.emoji);
     el.addEventListener('click', (e) => { e.stopPropagation(); react(); });
