@@ -524,6 +524,9 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
 .chat-tag { padding: 2px 8px; border-radius: var(--md-shape-full); background: var(--md-sys-color-tertiary-container); color: var(--md-sys-color-on-tertiary-container); font-size: 10px; font-weight: 600; white-space: nowrap; }
 .chat-tag--public { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
 .chat-join { flex-shrink: 0; padding: 6px 12px; border-radius: var(--md-shape-full); background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font-size: 12px; font-weight: 600; }
+.chat-hide { flex-shrink: 0; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; color: var(--md-sys-color-on-surface-variant); opacity: 0.5; }
+.chat-item:hover .chat-hide, .chat-hide:focus { opacity: 1; background: var(--md-sys-color-surface-container-high); }
+.chat-hide .material-icons { font-size: 18px; }
 .chat-room { display: flex; flex-direction: column; height: 100dvh; }
 .chat-room .top-app-bar { gap: 10px; flex-shrink: 0; }
 .chat-room__head { display: flex; flex-direction: column; min-width: 0; }
@@ -814,7 +817,7 @@ const SUBJECTS = [
 
 const state = {
   account: null, jobs: [], followedRooms: [], likedIds: [], chats: [], comments: [],
-  deletedJobIds: [], deletedChatIds: []
+  hiddenChatIds: [], deletedJobIds: [], deletedChatIds: []
 };
 let screen = 'login';
 let selectedJobId = null;
@@ -945,7 +948,8 @@ function saveLocal() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       account: state.account, jobs: state.jobs, followedRooms: state.followedRooms,
-      likedIds: state.likedIds, chats: state.chats, comments: state.comments
+      likedIds: state.likedIds, chats: state.chats, comments: state.comments,
+      hiddenChatIds: state.hiddenChatIds
     }));
   } catch (e) {}
 }
@@ -1227,7 +1231,8 @@ async function cloudPush() {
 
     if (state.account) {
       const acc = Object.assign({}, state.account, {
-        followedRooms: state.followedRooms, likedIds: state.likedIds
+        followedRooms: state.followedRooms, likedIds: state.likedIds,
+        hiddenChatIds: state.hiddenChatIds
       });
       const sig = JSON.stringify(acc);
       if (pushedAccount !== sig) {
@@ -1325,12 +1330,14 @@ function loadState() {
     state.likedIds = parsed && Array.isArray(parsed.likedIds) ? parsed.likedIds : [];
     state.chats = parsed && Array.isArray(parsed.chats) ? parsed.chats : [];
     state.comments = parsed && Array.isArray(parsed.comments) ? parsed.comments : [];
+    state.hiddenChatIds = parsed && Array.isArray(parsed.hiddenChatIds) ? parsed.hiddenChatIds : [];
     state.deletedJobIds = parsed && Array.isArray(parsed.deletedJobIds) ? parsed.deletedJobIds : [];
     state.deletedChatIds = parsed && Array.isArray(parsed.deletedChatIds) ? parsed.deletedChatIds : [];
   } catch (e) {
     state.account = null;
     state.jobs = [];
     state.chats = [];
+    state.hiddenChatIds = [];
     state.deletedJobIds = [];
     state.deletedChatIds = [];
   }
@@ -1340,7 +1347,7 @@ function saveState() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       account: state.account, jobs: state.jobs, followedRooms: state.followedRooms, likedIds: state.likedIds,
-      chats: state.chats, comments: state.comments,
+      chats: state.chats, comments: state.comments, hiddenChatIds: state.hiddenChatIds,
       deletedJobIds: state.deletedJobIds, deletedChatIds: state.deletedChatIds
     }));
   } catch (e) { /* storage unavailable */ }
@@ -1562,11 +1569,12 @@ function finishAuth(account, payload) {
   if (payload) {
     state.followedRooms = Array.isArray(payload.followedRooms) ? payload.followedRooms : [];
     state.likedIds = Array.isArray(payload.likedIds) ? payload.likedIds : [];
+    state.hiddenChatIds = Array.isArray(payload.hiddenChatIds) ? payload.hiddenChatIds : [];
   }
   state.account = account;
   syncUser = account.username;
   pushedAccount = JSON.stringify(Object.assign({}, account, {
-    followedRooms: state.followedRooms, likedIds: state.likedIds
+    followedRooms: state.followedRooms, likedIds: state.likedIds, hiddenChatIds: state.hiddenChatIds
   }));
   navTab = 'home';
   screen = 'home';
@@ -1639,12 +1647,14 @@ async function onLoginSubmit(e) {
       followedRooms: Array.isArray(own.followedRooms) ? own.followedRooms
         : (Array.isArray(pub.followedRooms) ? pub.followedRooms : []),
       likedIds: Array.isArray(own.likedIds) ? own.likedIds
-        : (Array.isArray(pub.likedIds) ? pub.likedIds : [])
+        : (Array.isArray(pub.likedIds) ? pub.likedIds : []),
+      hiddenChatIds: Array.isArray(own.hiddenChatIds) ? own.hiddenChatIds : []
     };
     if (account.mustChangePassword) {
       state.account = account;
       state.followedRooms = payload.followedRooms;
       state.likedIds = payload.likedIds;
+      state.hiddenChatIds = payload.hiddenChatIds;
       navTab = 'profile';
       go('changePassword');
       return;
@@ -2067,6 +2077,23 @@ function openProfileView(username, from, name) {
 }
 
 /* ---- chat helpers ---- */
+function isChatHidden(id) {
+  return state.hiddenChatIds.indexOf(id) !== -1;
+}
+
+async function toggleHideChat(id) {
+  if (!id || !state.account || !db) return;
+  if (!window.confirm('ซ่อนแชทนี้จากบัญชีคุณหรือไม่?')) return;
+  const i = state.hiddenChatIds.indexOf(id);
+  if (i === -1) state.hiddenChatIds.push(id);
+  else state.hiddenChatIds.splice(i, 1);
+  saveLocal();
+  try {
+    await db.collection('accounts').doc(state.account.username).update({ hiddenChatIds: state.hiddenChatIds });
+  } catch (e) { setFlash('ซ่อนแชทไม่สำเร็จ'); }
+  render({ noAnim: true });
+}
+
 function me() {
   return state.account ? state.account.username : '';
 }
@@ -2316,10 +2343,10 @@ function refreshChatRoom() {
 }
 
 function renderChatHtml() {
-  const myChats = state.chats.filter((c) => (c.members || []).indexOf(me()) !== -1)
+  const myChats = state.chats.filter((c) => (c.members || []).indexOf(me()) !== -1 && !isChatHidden(c.id))
     .sort((a, b) => lastChatTime(b) - lastChatTime(a));
   const publicGroups = state.chats.filter((c) => c.type === 'group' && c.privacy === 'public'
-    && (c.members || []).indexOf(me()) === -1)
+    && (c.members || []).indexOf(me()) === -1 && !isChatHidden(c.id))
     .sort((a, b) => lastChatTime(b) - lastChatTime(a));
   const row = (chat, joinable) => {
     const msgs = Array.isArray(chat.messages) ? chat.messages : [];
@@ -2338,7 +2365,7 @@ function renderChatHtml() {
           ${chat.type === 'group' ? `<span class="chat-tag ${chat.privacy === 'public' ? 'chat-tag--public' : ''}">${chat.privacy === 'public' ? 'สาธารณะ' : 'ส่วนตัว'}</span>` : ''}
         </span>
       </span>
-      ${joinable ? `<span class="chat-join" data-join="${escapeHtml(chat.id)}">เข้าร่วม</span>` : ''}
+      ${joinable ? `<span class="chat-join" data-join="${escapeHtml(chat.id)}">เข้าร่วม</span>` : `<span class="chat-hide" data-chat-hide="${escapeHtml(chat.id)}" role="button" tabindex="0" aria-label="ซ่อนแชท"><span class="material-icons">close</span></span>`}
     </button>`;
   };
   return `
@@ -2468,6 +2495,11 @@ function bindChat() {
       if (e.target.closest('.chat-join')) {
         e.stopPropagation();
         toggleJoinGroup(item.dataset.chat);
+        return;
+      }
+      if (e.target.closest('.chat-hide')) {
+        e.stopPropagation();
+        toggleHideChat(item.dataset.chat);
         return;
       }
       currentChatId = item.dataset.chat;
