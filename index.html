@@ -542,7 +542,15 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
 .chat-row--mine .chat-bubble { border-radius: 18px 18px 4px 18px; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
 .chat-bubble__sender { font-size: 11px; font-weight: 600; color: var(--md-sys-color-primary); margin-bottom: 2px; }
 .chat-bubble__text { white-space: pre-wrap; }
-.chat-bubble__time { font-size: 10px; opacity: 0.6; text-align: right; margin-top: 4px; }
+.chat-bubble__time { font-size: 10px; opacity: 0.6; }
+.chat-bubble__bottom { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+.chat-bubble__reply { border-left: 2px solid var(--md-sys-color-primary); padding: 2px 0 2px 8px; margin-bottom: 6px; font-size: 11px; opacity: 0.8; display: flex; flex-direction: column; max-width: 220px; }
+.chat-bubble__reply span { font-weight: 600; }
+.chat-reply { display: inline-flex; cursor: pointer; opacity: 0.55; }
+.chat-reply:hover, .chat-reply:focus { opacity: 1; }
+.chat-reply .material-icons { font-size: 16px; }
+.reply-chip { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; padding: 4px 10px; margin: 0 12px; border-radius: var(--md-shape-full); background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); font-size: 12px; }
+.reply-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chat-composer { flex-shrink: 0; display: flex; align-items: flex-end; gap: 8px; padding: 8px 12px calc(10px + env(safe-area-inset-bottom)); background: var(--md-sys-color-surface); border-top: 1px solid var(--md-sys-color-outline-variant); }
 .chat-composer textarea { flex: 1; min-height: 44px; max-height: 120px; resize: none; padding: 11px 14px; border: 1px solid var(--md-sys-color-outline-variant); border-radius: var(--md-shape-full); background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface); font: inherit; font-size: 14px; outline: none; }
 .chat-composer textarea:focus { border-color: var(--md-sys-color-primary); }
@@ -2177,6 +2185,14 @@ function fmtChatTime(iso) {
   return d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
 }
 
+let replyTarget = null;
+
+function clearReply() {
+  replyTarget = null;
+  const chip = document.getElementById('reply-chip');
+  if (chip) chip.remove();
+}
+
 function renderMessagesHtml(chat) {
   const msgs = Array.isArray(chat.messages) ? chat.messages : [];
   if (!msgs.length) return '<p class="empty-text chat-empty">ยังไม่มีข้อความ — เริ่มสนทนากันเลย</p>';
@@ -2189,12 +2205,13 @@ function renderMessagesHtml(chat) {
       : `<span class="chat-msg-avatar" style="background:${avatarColor(m.sender || senderName)}">${escapeHtml(senderName.charAt(0))}</span>`);
     return `<div class="chat-row ${mine ? 'chat-row--mine' : ''}">
       ${avatar}
-      <div class="chat-bubble">
+      <div class="chat-bubble" data-msg-id="${escapeHtml(m.id)}">
+        ${m.replyTo ? `<div class="chat-bubble__reply"><span>${escapeHtml(m.replyTo.sender || '')}</span>${escapeHtml(String(m.replyTo.text || '').slice(0, 80))}</div>` : ''}
         ${mine ? '' : `<div class="chat-bubble__sender">${escapeHtml(senderName)}</div>`}
         ${m.image ? `<img class="chat-bubble__image" src="${escapeHtml(m.image)}" alt="${escapeHtml(m.fileName || 'รูปภาพ')}" loading="lazy">` : ''}
         ${m.file ? `<a class="chat-bubble__file" href="${escapeHtml(m.file)}" download="${escapeHtml(m.fileName || 'file')}"><span class="material-icons">description</span><span>${escapeHtml(m.fileName || 'ไฟล์')}</span></a>` : ''}
         ${m.text ? `<div class="chat-bubble__text">${escapeHtml(m.text)}</div>` : ''}
-        <div class="chat-bubble__time">${fmtChatTime(m.createdAt)}</div>
+        <div class="chat-bubble__bottom"><span class="chat-bubble__time">${fmtChatTime(m.createdAt)}</span><span class="chat-reply" data-reply="${escapeHtml(m.id)}" role="button" tabindex="0" aria-label="ตอบกลับ"><span class="material-icons">reply</span></span></div>
       </div>
     </div>`;
   }).join('');
@@ -2276,10 +2293,12 @@ function sendChatMessage() {
     sender: me(),
     senderName: state.account.name || me(),
     text,
+    replyTo: replyTarget ? Object.assign({}, replyTarget) : undefined,
     createdAt: new Date().toISOString()
   });
   input.value = '';
   input.style.height = '';
+  clearReply();
   saveState();
   refreshChatRoom();
 }
@@ -2297,12 +2316,14 @@ function sendChatFile(dataUrl, fileName, fileType, isImage) {
     text: caption,
     fileName: fileName || '',
     fileType: fileType || '',
+    replyTo: replyTarget ? Object.assign({}, replyTarget) : undefined,
     createdAt: new Date().toISOString()
   };
   if (isImage) msg.image = dataUrl;
   else msg.file = dataUrl;
   chat.messages.push(msg);
   if (input) { input.value = ''; input.style.height = ''; }
+  clearReply();
   saveState();
   refreshChatRoom();
 }
@@ -2415,6 +2436,7 @@ function renderChatRoomHtml() {
     <button class="icon-button" id="chat-leave-btn" aria-label="ออกจากกลุ่ม"><span class="material-icons">exit_to_app</span></button>` : ''}
   </div>
   <div class="chat-messages" id="chat-messages">${renderMessagesHtml(chat)}</div>
+  <div id="reply-slot">${replyTarget ? `<span class="reply-chip" id="reply-chip"><span>ตอบกลับ ${escapeHtml(replyTarget.sender)}: ${escapeHtml(replyTarget.text)}</span><span class="material-icons" id="reply-cancel" role="button" aria-label="ยกเลิก" style="cursor:pointer;font-size:18px">close</span></span>` : ''}</div>
   <form class="chat-composer" id="chat-form">
     <label class="chat-attach" aria-label="แนบรูปภาพ" title="แนบรูปภาพ"><span class="material-icons">image</span><input type="file" id="chat-image-input" accept="image/*"></label>
     <label class="chat-attach" aria-label="แนบไฟล์" title="แนบไฟล์"><span class="material-icons">attach_file</span><input type="file" id="chat-file-input"></label>
@@ -2524,6 +2546,24 @@ function bindChat() {
 function bindChatRoom() {
   const back = document.getElementById('chat-back');
   if (back) back.addEventListener('click', () => go('chat'));
+  document.querySelectorAll('[data-reply]').forEach((el) => {
+    const pick = () => {
+      const chat = currentChat();
+      const m = chat && (chat.messages || []).find((x) => x.id === el.dataset.reply);
+      if (!m) return;
+      replyTarget = { id: m.id, sender: m.senderName || m.sender || '', text: String(m.text || m.fileName || '').slice(0, 80) };
+      const slot = document.getElementById('reply-slot');
+      if (slot) slot.innerHTML = `<span class="reply-chip" id="reply-chip"><span>ตอบกลับ ${escapeHtml(replyTarget.sender)}: ${escapeHtml(replyTarget.text)}</span><span class="material-icons" id="reply-cancel" role="button" aria-label="ยกเลิก" style="cursor:pointer;font-size:18px">close</span></span>`;
+      const cancel = document.getElementById('reply-cancel');
+      if (cancel) cancel.addEventListener('click', clearReply);
+      const composer = document.getElementById('chat-input');
+      if (composer) composer.focus();
+    };
+    el.addEventListener('click', (e) => { e.stopPropagation(); pick(); });
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
+  });
+  const cancelReply = document.getElementById('reply-cancel');
+  if (cancelReply) cancelReply.addEventListener('click', clearReply);
   const form = document.getElementById('chat-form');
   if (form) form.addEventListener('submit', (e) => { e.preventDefault(); sendChatMessage(); });
   const input = document.getElementById('chat-input');
