@@ -549,6 +549,11 @@ textarea.textfield__input { resize: vertical; min-height: 84px; }
 .chat-reply { display: inline-flex; cursor: pointer; opacity: 0.55; }
 .chat-reply:hover, .chat-reply:focus { opacity: 1; }
 .chat-reply .material-icons { font-size: 16px; }
+.chat-reactions { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+.chat-reaction { display: inline-flex; align-items: center; gap: 2px; padding: 2px 6px; border-radius: var(--md-shape-full); background: var(--md-sys-color-surface-container); font-size: 14px; cursor: pointer; opacity: 0.6; }
+.chat-reaction:hover, .chat-reaction:focus { opacity: 1; }
+.chat-reaction.is-mine { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); opacity: 1; }
+.chat-reaction small { font-size: 10px; font-weight: 600; }
 .reply-chip { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; padding: 4px 10px; margin: 0 12px; border-radius: var(--md-shape-full); background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); font-size: 12px; }
 .reply-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chat-composer { flex-shrink: 0; display: flex; align-items: flex-end; gap: 8px; padding: 8px 12px calc(10px + env(safe-area-inset-bottom)); background: var(--md-sys-color-surface); border-top: 1px solid var(--md-sys-color-outline-variant); }
@@ -2186,6 +2191,23 @@ function fmtChatTime(iso) {
 }
 
 let replyTarget = null;
+const REACTIONS = ['❤️','👍','😂','😮','😢'];
+
+async function toggleReaction(chatId, msgId, emoji) {
+  const chat = state.chats.find((c) => c.id === chatId);
+  const m = chat && (chat.messages || []).find((x) => x.id === msgId);
+  if (!m || !authUser) return;
+  const reactions = Object.assign({}, m.reactions || {});
+  const users = Array.isArray(reactions[emoji]) ? reactions[emoji].slice() : [];
+  const i = users.indexOf(authUser.uid);
+  if (i === -1) users.push(authUser.uid);
+  else users.splice(i, 1);
+  if (!users.length) delete reactions[emoji];
+  else reactions[emoji] = users;
+  try {
+    await db.collection('chats').doc(chatId).collection('messages').doc(msgId).update({ reactions });
+  } catch (e) { setFlash('ใส่ความรู้สึกไม่สำเร็จ'); }
+}
 
 function clearReply() {
   replyTarget = null;
@@ -2212,6 +2234,11 @@ function renderMessagesHtml(chat) {
         ${m.file ? `<a class="chat-bubble__file" href="${escapeHtml(m.file)}" download="${escapeHtml(m.fileName || 'file')}"><span class="material-icons">description</span><span>${escapeHtml(m.fileName || 'ไฟล์')}</span></a>` : ''}
         ${m.text ? `<div class="chat-bubble__text">${escapeHtml(m.text)}</div>` : ''}
         <div class="chat-bubble__bottom"><span class="chat-bubble__time">${fmtChatTime(m.createdAt)}</span><span class="chat-reply" data-reply="${escapeHtml(m.id)}" role="button" tabindex="0" aria-label="ตอบกลับ"><span class="material-icons">reply</span></span></div>
+        <div class="chat-reactions">${REACTIONS.map((e) => {
+          const users = (m.reactions && m.reactions[e]) || [];
+          const mine = authUser && users.indexOf(authUser.uid) !== -1;
+          return `<span class="chat-reaction ${mine ? 'is-mine' : ''}" data-react="${escapeHtml(m.id)}" data-emoji="${escapeHtml(e)}" role="button" tabindex="0">${e}${users.length ? `<small>${users.length}</small>` : ''}</span>`;
+        }).join('')}</div>
       </div>
     </div>`;
   }).join('');
@@ -2546,6 +2573,11 @@ function bindChat() {
 function bindChatRoom() {
   const back = document.getElementById('chat-back');
   if (back) back.addEventListener('click', () => go('chat'));
+  document.querySelectorAll('[data-react]').forEach((el) => {
+    const react = () => toggleReaction(currentChatId, el.dataset.react, el.dataset.emoji);
+    el.addEventListener('click', (e) => { e.stopPropagation(); react(); });
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); react(); } });
+  });
   document.querySelectorAll('[data-reply]').forEach((el) => {
     const pick = () => {
       const chat = currentChat();
