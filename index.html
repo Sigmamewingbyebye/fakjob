@@ -968,6 +968,29 @@ function chatMetaOf(c) {
   };
 }
 
+async function hydrateChats() {
+  if (!cloudReady || !authUser || !state.account) return;
+  try {
+    const snap = await db.collection('chats').get();
+    const chats = snap.docs.map((d) => Object.assign({ id: d.id }, docData(d), { messages: [] }));
+    await Promise.all(chats.map(async (c) => {
+      const ms = await db.collection('chats').doc(c.id).collection('messages').get();
+      c.messages = ms.docs.map((d) => Object.assign({ id: d.id, chatId: c.id }, docData(d)))
+        .sort((a, b) => String(a.createdAt || '').localeCompare(String(b.createdAt || '')));
+    }));
+    state.chats = chats;
+    chats.forEach((c) => {
+      pushedChats[c.id] = JSON.stringify(chatMetaOf(c));
+      c.messages.forEach((m) => {
+        pushedMsgs[m.id] = JSON.stringify(m);
+        pushedMsgChat[m.id] = c.id;
+      });
+    });
+    saveLocal();
+    if (screen === 'chat' || screen === 'chatRoom') render({ noAnim: true });
+  } catch (e) { /* ใช้ข้อมูลจาก listener แทน */ }
+}
+
 function applyRemoteChats() {
   if (!listenersReady.chats || !listenersReady.messages) return;
   const byId = new Map();
@@ -1551,6 +1574,7 @@ function finishAuth(account, payload) {
   render();
   applyPendingJoin();
   restoreProfileFromLegacy(account.username);
+  hydrateChats();
 }
 
 function renderLoginHtml() {
@@ -2431,6 +2455,7 @@ function showChatMembersDialog() {
 }
 
 function bindChat() {
+  if (authUser && !state.chats.length) hydrateChats();
   const newBtn = document.getElementById('chat-new-fab') || document.getElementById('new-chat-btn');
   if (newBtn) newBtn.addEventListener('click', () => {
     groupNameDraft = '';
